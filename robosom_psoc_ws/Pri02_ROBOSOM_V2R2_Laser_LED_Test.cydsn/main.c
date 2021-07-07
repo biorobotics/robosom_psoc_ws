@@ -35,11 +35,6 @@ uint16 count;
 uint8 buffer[USBUART_BUFFER_SIZE];
 void USBUART_user_check_init(void);
 void USBUART_user_echo(void);
-uint16 USBUART_user_check_read(void);
-
-uint16 read_count;
-uint8 buffer_read[USBUART_BUFFER_SIZE];
-uint8 serial_input = 0;
 
 // Testing Function
 void print_imu_via_usbuart(void);
@@ -53,10 +48,13 @@ void sys_clock_ms_callback(void); // 1ms callback interrupt function
 int main(void)
 {
     uint8_t led_test = 0;
-    uint8_t laser_val = 0;
-    buffer[0] = 1;
     
     CyGlobalIntEnable; /* Enable global interrupts. */
+    
+    // PWM Block Init
+    PWM_LED_Start();
+    PWM_BUZZER_Start();
+    PWM_BUZZER_EN_Start();
     
     // USBUART Init
     USBUART_Start(USBFS_DEVICE, USBUART_5V_OPERATION);
@@ -69,17 +67,12 @@ int main(void)
     imu_bmi160_init();
     imu_bmi160_config();
     imu_bmi160_enable_step_counter();
-    
-    // PWM Block Init
-    PWM_LED_Start();
-    
-    PWM_LASER_Start();
    
     /* Turn off LEDs */
     Led_Red_Write(0);
     Led_Green_Write(0);
     Led_Blue_Write(0);
-    Led_Key_Write(1);
+    PLED_Write(1);
     
     CyDelay(100);
     
@@ -95,16 +88,6 @@ int main(void)
         imu_bmi160_read_steps();
         USBUART_user_check_init();
         //USBUART_user_echo();
-        read_count = USBUART_user_check_read();
-        //serial_input = USBUART_GetChar();
-        serial_input = buffer_read[0];
-        
-        laser_val = serial_input & 0b01111111; // Mask for last 7 bits
-        //PWM_LASER_WriteCompare(0xF0);
-        PWM_LASER_WriteCompare(laser_val);
-        //PWM_LASER_WriteCompare(1);
-        
-        
         print_imu_via_usbuart();
         
         led_test++;
@@ -112,13 +95,7 @@ int main(void)
         Led_Red_Write((led_test >> 0) & 0x01);
         Led_Green_Write((led_test >> 1) & 0x01);
         Led_Blue_Write((led_test >> 2) & 0x01);   
-
-        if (Led_Key_Read() == 0)
-        {
-            led_test = 0;
-        }
           
-        
         CyDelay(10);       
     }
 }
@@ -237,6 +214,7 @@ void USBUART_user_check_init(void) {
     }
 }
 
+
 void USBUART_user_echo(void) {
     /* Service USB CDC when device is configured. */
     if (0u != USBUART_GetConfiguration())
@@ -277,25 +255,6 @@ void USBUART_user_echo(void) {
     }
 }
 
-uint16 USBUART_user_check_read(void) {
-    /* Service USB CDC when device is configured. */
-    if (0u != USBUART_GetConfiguration())
-    {
-        /* Check for input data from host. */
-        if (0u != USBUART_DataIsReady())
-        {
-            /* Read received data and re-enable OUT endpoint. */
-            count = USBUART_GetAll(buffer_read);
-            return count;
-        }
-        
-        return 0;
-    }
-    
-    return -1;
-}
-
-
 void print_imu_via_usbuart(void)
 {   
     //int32_t gyro_offset = 50000;
@@ -322,7 +281,5 @@ void print_imu_via_usbuart(void)
 void sys_clock_ms_callback(void){
     sys_clock_cur_ms ++; // increment ms counter by 1
 }
-
-
 
 /* [] END OF FILE */
