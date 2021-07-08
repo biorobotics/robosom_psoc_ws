@@ -95,10 +95,11 @@ int main(void)
     I2C_1_Start();
     us_clock_Start();
     isr_time_StartEx(Isr_second_handler);
+    
     // IMU BMI160 Init
-    //imu_bmi160_init();
-    //imu_bmi160_config();
-    //imu_bmi160_enable_step_counter();
+    imu_bmi160_init();
+    imu_bmi160_config();
+    imu_bmi160_enable_step_counter();
     
     // PWM Block Init
     PWM_LED_Start();
@@ -119,6 +120,7 @@ int main(void)
     {
         usb_configuration_reinit();
     }
+    // LL comment this out so that we can try to SWD debug without USB
     
     // Trigger first Ximea trigger pulse - Might want to link this to a button for manual triggering.
     Trig_Pulser_Start();
@@ -136,18 +138,20 @@ int main(void)
         
         bool reconfigured = false;
         reconfigured = usb_configuration_reinit();
-        CyDelay(10000);
+        CyDelay(1000); // LL reduced this to 1 sec delay
         sprintf((char *)buffer, "TEST!\n");
 
         usb_put_string((char8 *)buffer);
-        //imu_bmi160_read_acc_gyo();
-        //print_imu_via_usbuart();
        
         ICHT_init_test(&config);
-        /*
+        
+        // /* - // LL remote the comment to see if IMU is still functioning
         imu_bmi160_read_acc_gyo();
-        //imu_bmi160_read_steps();
+        imu_bmi160_read_steps();
+        
+        //USBUART_user_echo();
         print_imu_via_usbuart();
+        
         while (frame_status == NEW_FRAME) 
         {
             frame_status = NO_FRAME;
@@ -163,7 +167,7 @@ int main(void)
         
             pwm_laser_val = serial_input & 0b01111111; // Mask for last 7 bits
             pulse_enabled = serial_input & 0b10000000; // Mask for first bit. - Just disables pulse, can change behavior to disable/enable Laser.
-            PWM_LASER_WriteCompare(pwm_laser_val);
+            // PWM_LASER_WriteCompare(pwm_laser_val);
             led_test++;
         }
         
@@ -172,11 +176,7 @@ int main(void)
         Led_Green_Write((led_test >> 1) & 0x01);
         Led_Blue_Write((led_test >> 2) & 0x01);   
 
-        if (Led_Key_Read() == 0)
-        {
-            led_test = 0;
-        }
-        */
+        // */ - // LL remote the comment to see if IMU is still functioning
     }
 }
 
