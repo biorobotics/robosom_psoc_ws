@@ -189,6 +189,23 @@ int8_t ICHT_init_test(struct ICHT_config *conf)
         usb_put_string((char8 *)buffer);      
         CyDelay(10);
     }
+    struct ICHT_reg_list reg_list;
+    ICHT_init_structs(conf);
+    status = ICHT_configure_driver(conf, &reg_list);
+    // Can print out individual registers on reg_list to check functionality. For now, printout error flags:
+    if (status != ICHT_NO_ERR){
+        sprintf((char *)buffer, "Failed register set! %d \n", status_2);
+        usb_put_string((char8 *)buffer);
+        CyDelay(10);
+    }
+    else {
+        regs = reg_list.STATUS;
+        sprintf((char *)buffer, "Flags: CFGTIMO %x INITRAM %x LDKSAT1 %x LDKSAT2 %x MPAC1 %x MPAC2 %x MEMERR %x MONC1 %x MONC2 %x OSCERR %x OCV1 %x OCV2 %x OVT %x PDOVDD %x\n", 
+        regs.CFGTIMO, regs.INITRAM, regs.LDKSAT1, regs.LDKSAT2, regs.MAPC1, regs.MAPC2, regs.MEMERR, regs.MONC1, regs.MONC2, regs.OSCERR, regs.OVC1, regs.OVC2, regs.OVT, regs.PDOVDD);
+        usb_put_string((char8 *)buffer);      
+        CyDelay(10);
+    }
+    
     return status;
 }
 
@@ -211,7 +228,7 @@ void ICHT_init_structs(struct ICHT_config *conf) {
     // Default configuration settings for W channels
     struct ICHT_ADC_Config ADC_Config = {
         .channel = ICHT_CHANNEL_1,
-        .disable_PLR = true,
+        .disable_PLR = false, // Using internal PLR
         .enable_external_capacitor = true,
         .enable_offset_compensation = true,
         .mode = ICHT_APC_ENABLE,
@@ -221,10 +238,12 @@ void ICHT_init_structs(struct ICHT_config *conf) {
     // Configure settings same for CHN 1 and 2
     reg_list.ADCCONFIG1 = ADC_Config;
     ADC_Config.channel = ICHT_CHANNEL_2;
+    ADC_Config.disable_channel = true; // Disable channel 2 for now
     reg_list.ADCCONFIG2 = ADC_Config;
     
     reg_list.RMD1.channel = ICHT_CHANNEL_1;
     reg_list.RMD2.channel = ICHT_CHANNEL_2;
+    
     
     /* TODO - DOUBLE CHECK Electrical Characteristic 108
        at a supply voltage of 5V.
@@ -235,25 +254,36 @@ void ICHT_init_structs(struct ICHT_config *conf) {
        max of RACC_LO is 80mA, can set to MAX
        Max voltage of 2.6V
      */
+
     reg_list.ILIM2.channel = ICHT_CHANNEL_2;
-    reg_list.ILIM2.n = 0xFF;
-    reg_list.ADSNFRACC.range_2 = ICHT_RACC_CURRENT_LO; 
+    //reg_list.ILIM2.n = 0xFF;
+    //reg_list.ADSNFRACC.range_2 = ICHT_RACC_CURRENT_LO; 
     // Not high enough to prevent dmg, 5V source - 1.2 = 3.8 > 2.6
     reg_list.REGCONFIG2.channel = ICHT_CHANNEL_2;
-    reg_list.REGCONFIG2.sat_threshold = ICHT_RLDKS_VLDK_LT_1_2V;
-    
+   // reg_list.REGCONFIG2.sat_threshold = ICHT_RLDKS_VLDK_LT_1_2V;
+
     /* 
-       D405-120 M diode has a max of 150mA
+       D405-120 M diode has a max of 150mA, 120mA typ.
        Datasheet isn't consistent..
        Assuming typical shutdown resolution D_I(LDK)
        of 4 when RACC = HIGH, n = 38?
        Max voltage of 6V
+       MAX ImoN = .7mA, typical is .4mA
+       With RMD1 = 500ohm, and V = 1.0V, IMon = .20mA
      */
     reg_list.ILIM1.channel = ICHT_CHANNEL_1;
     reg_list.ILIM1.n = 38;
     reg_list.ADSNFRACC.range_1 = ICHT_RACC_CURRENT_HI;
     reg_list.REGCONFIG1.channel = ICHT_CHANNEL_1;
     reg_list.REGCONFIG1.sat_threshold = ICHT_RLDKS_VLDK_LT_0_5V;
+    // VRef = VRef Max, ~1.1 to 1.0V
+    reg_list.REGCONFIG1.Vref = 0x3FF;
+    // Assuming worse case with least resistance, min resistance allowed for .6mA would be:
+    // n = 128, RMD1 = 112*(1+(2/100))^(129) = 1440ohms
+    // Then under normal case: ~.09mA
+    // Instead, assuming normal case with worse min RMD0, we'll use n = 109, with set current of ~
+    // 130*(1+(3.3/100))^(134+1) results in setting to ~.21mA
+    reg_list.RMD1.n = 109;
     
     reg_list.mode = ICHT_MODE_SETTING_OP;
     conf->regs = reg_list;
