@@ -264,7 +264,7 @@ void ICHT_init_structs(struct ICHT_config *conf) {
     // Assuming worse case with least resistance, min resistance allowed for .6mA would be:
     // n = 128, RMD1 = 112*(1+(2/100))^(129) = 1440ohms
     // Then under normal case: ~.09mA
-    // Instead, assuming normal case with worse min RMD0, we'll use n = 109, with set current of ~
+    // Instead, assuming normal case with worse min RMD0, we'll use n = 96, with set current of ~
     // 130*(1+(3.3/100))^(96+1) results in setting to .25mA~.33mA
     reg_list.RMD1.n = 96;
     
@@ -387,21 +387,194 @@ int8_t ICHT_configure_driver(struct ICHT_config *conf, struct ICHT_reg_list *reg
     reg_list->mode = ICHT_MODE_SETTING_CONFIG;
     uint8_t status = ICHT_set_mode(conf, &(reg_list->mode));
     if (status != ICHT_NO_ERR) return status;
-    
+    CyDelay(10);
     // Clears the status registers
     status = ICHT_get_status_regs(conf, &(reg_list->STATUS));
     if (status != ICHT_NO_ERR) return status;
     // Write out all registers
     status = ICHT_write_all_regs(conf, reg_list);
     if (status != ICHT_NO_ERR) return status;
+    CyDelay(10);
+    // Return to operation mode
+    reg_list->mode = ICHT_MODE_SETTING_OP;
+    status = ICHT_set_mode(conf, &(reg_list->mode));
+    if (status != ICHT_NO_ERR) return status;
+    CyDelay(10);
+    // Get resulting driver status
+    return ICHT_read_all_regs(conf, &(conf->regs));
+}
+
+/** @brief Writes all writeable regs from the provided struct */
+int8_t ICHT_write_each_reg_conf(struct ICHT_config *conf, struct ICHT_reg_list *reg_list)
+{
+    reg_list->mode = ICHT_MODE_SETTING_CONFIG;
+    uint8_t status = ICHT_set_mode(conf, &(reg_list->mode));
+    if (status != ICHT_NO_ERR) return status;
+    CyDelay(1);
+    // Clears the status registers
+    status = ICHT_get_status_regs(conf, &(reg_list->STATUS));
+    if (status != ICHT_NO_ERR) return status;
+    CyDelay(1);
+    status = ICHT_set_overcurrent_thresh(conf, &(reg_list->ILIM1));
+    if (status != ICHT_NO_ERR)
+    {
+       return status;
+    }
+    CyDelay(1);
+    // Return to operation mode
+    reg_list->mode = ICHT_MODE_SETTING_OP;
+    status = ICHT_set_mode(conf, &(reg_list->mode));
+    if (status != ICHT_NO_ERR) return status;
+    CyDelay(1);
+    reg_list->mode = ICHT_MODE_SETTING_CONFIG;
+    status = ICHT_set_mode(conf, &(reg_list->mode));
+    if (status != ICHT_NO_ERR) return status;
+    CyDelay(1);
+    status = ICHT_set_monitor_resistance(conf, &(reg_list->RMD1));
+    if (status != ICHT_NO_ERR)
+    {
+       return status;
+    }
+    CyDelay(1);
+    // Return to operation mode
+    reg_list->mode = ICHT_MODE_SETTING_OP;
+    status = ICHT_set_mode(conf, &(reg_list->mode));
+    if (status != ICHT_NO_ERR) return status;
+    CyDelay(1);
+    reg_list->mode = ICHT_MODE_SETTING_CONFIG;
+    status = ICHT_set_mode(conf, &(reg_list->mode));
+    if (status != ICHT_NO_ERR) return status;
+    CyDelay(1);
+    status = ICHT_set_Regulator_Config(conf, &(reg_list->REGCONFIG1));
+    if (status != ICHT_NO_ERR)
+    {
+       return status;
+    }
+    CyDelay(1);
+    // Return to operation mode
+    reg_list->mode = ICHT_MODE_SETTING_OP;
+    status = ICHT_set_mode(conf, &(reg_list->mode));
+    if (status != ICHT_NO_ERR) return status;
+    CyDelay(1);
+    reg_list->mode = ICHT_MODE_SETTING_CONFIG;
+    status = ICHT_set_mode(conf, &(reg_list->mode));
+    if (status != ICHT_NO_ERR) return status;
+    CyDelay(1);
+    status = ICHT_set_ADC_Config(conf, &(reg_list->ADCCONFIG2));
+    if (status != ICHT_NO_ERR)
+    {
+       return status;
+    }
+    CyDelay(1);
+    // Return to operation mode
+    reg_list->mode = ICHT_MODE_SETTING_OP;
+    status = ICHT_set_mode(conf, &(reg_list->mode));
+    if (status != ICHT_NO_ERR) return status;
+    CyDelay(1);
+    reg_list->mode = ICHT_MODE_SETTING_CONFIG;
+    status = ICHT_set_mode(conf, &(reg_list->mode));
+    if (status != ICHT_NO_ERR) return status;
+    CyDelay(1);
+    status = ICHT_set_overcurrent_thresh(conf, &(reg_list->ILIM2));
+    if (status != ICHT_NO_ERR)
+    {
+       return status;
+    }
+    CyDelay(1);
+    // Return to operation mode
+    reg_list->mode = ICHT_MODE_SETTING_OP;
+    status = ICHT_set_mode(conf, &(reg_list->mode));
+    if (status != ICHT_NO_ERR) return status;
+    CyDelay(1);
+    reg_list->mode = ICHT_MODE_SETTING_CONFIG;
+    status = ICHT_set_mode(conf, &(reg_list->mode));
+    if (status != ICHT_NO_ERR) return status;
+    CyDelay(1);
+    status = ICHT_set_monitor_resistance(conf, &(reg_list->RMD2));
+    if (status != ICHT_NO_ERR)
+    {
+       return status;
+    }
+    CyDelay(1);
+    // Return to operation mode
+    reg_list->mode = ICHT_MODE_SETTING_OP;
+    status = ICHT_set_mode(conf, &(reg_list->mode));
+    if (status != ICHT_NO_ERR) return status;
+    CyDelay(1);
+    reg_list->mode = ICHT_MODE_SETTING_CONFIG;
+    status = ICHT_set_mode(conf, &(reg_list->mode));
+    if (status != ICHT_NO_ERR) return status;
+    CyDelay(1);
+    status = ICHT_set_Regulator_Config(conf, &(reg_list->REGCONFIG2));
+    if (status != ICHT_NO_ERR)
+    {
+       return status;
+    }
+    CyDelay(1);
+    // Return to operation mode
+    reg_list->mode = ICHT_MODE_SETTING_OP;
+    status = ICHT_set_mode(conf, &(reg_list->mode));
+    if (status != ICHT_NO_ERR) return status;
+    CyDelay(1);
+    reg_list->mode = ICHT_MODE_SETTING_CONFIG;
+    status = ICHT_set_mode(conf, &(reg_list->mode));
+    if (status != ICHT_NO_ERR) return status;
+    CyDelay(1);
+    status = ICHT_set_ADSNF_RACC_Config(conf, &(reg_list->ADSNFRACC));
+    if (status != ICHT_NO_ERR)
+    {
+       return status;
+    }
+    CyDelay(1);
+    // Return to operation mode
+    reg_list->mode = ICHT_MODE_SETTING_OP;
+    status = ICHT_set_mode(conf, &(reg_list->mode));
+    if (status != ICHT_NO_ERR) return status;
+    CyDelay(1);
+    reg_list->mode = ICHT_MODE_SETTING_CONFIG;
+    status = ICHT_set_mode(conf, &(reg_list->mode));
+    if (status != ICHT_NO_ERR) return status;
+    CyDelay(1);
+    status = ICHT_set_Merge_RDCO_Config(conf, &(reg_list->MERGERDCO));
+    if (status != ICHT_NO_ERR)
+    {
+       return status;
+    }
+    CyDelay(1);
+    // Return to operation mode
+    reg_list->mode = ICHT_MODE_SETTING_OP;
+    status = ICHT_set_mode(conf, &(reg_list->mode));
+    if (status != ICHT_NO_ERR) return status;
+    CyDelay(1);
+    /* Mode isn't written due to nature of changing configuration modes
+    status = ICHT_set_mode(conf, &(reg_list->mode));
+    if (status != ICHT_NO_ERR)
+    {
+       return status;
+    }
+    */
+    reg_list->mode = ICHT_MODE_SETTING_CONFIG;
+    status = ICHT_set_mode(conf, &(reg_list->mode));
+    if (status != ICHT_NO_ERR) return status;
+    CyDelay(1);
+    status = ICHT_set_error_regs(conf, &(reg_list->ERROR));
+    if (status != ICHT_NO_ERR)
+    {
+       return status;
+    }
+    CyDelay(1);
+
+    // Clears the status registers
+    status = ICHT_get_status_regs(conf, &(reg_list->STATUS));
+    if (status != ICHT_NO_ERR) return status;
     
+    CyDelay(1);
     // Return to operation mode
     reg_list->mode = ICHT_MODE_SETTING_OP;
     status = ICHT_set_mode(conf, &(reg_list->mode));
     if (status != ICHT_NO_ERR) return status;
     
-    // Get resulting driver status
-    return ICHT_read_all_regs(conf, &(conf->regs));
+    return status;
 }
 
 /** @brief Writes all writeable regs from the provided struct */
@@ -476,6 +649,7 @@ int8_t ICHT_write_all_regs(struct ICHT_config *conf, struct ICHT_reg_list *reg_l
    }
    return status;
 }
+
 
 /** @brief Reads the status registers, acknowledging any errors.
            Must be read after power-on.
