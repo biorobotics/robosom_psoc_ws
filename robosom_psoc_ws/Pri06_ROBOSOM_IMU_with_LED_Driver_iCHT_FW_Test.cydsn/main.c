@@ -136,6 +136,8 @@ int main(void)
     int8_t status;
     struct ICHT_reg_list reg_list;
     ICHT_init_structs(&config);
+    // Uncomment and comment above to enable ACC mode
+    //ICHT_init_structs_ACCTEST(&config);
     //status = ICHT_configure_driver(&config, &reg_list);
     status = ICHT_write_each_reg_conf(&config, &reg_list);
     // Can print out individual registers on reg_list to check functionality. For now, printout error flags:

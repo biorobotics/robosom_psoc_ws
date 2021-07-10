@@ -272,6 +272,82 @@ void ICHT_init_structs(struct ICHT_config *conf) {
     conf->regs = reg_list;
 }
 
+/** @brief Configures the iCHT driver structs with default write settings */
+void ICHT_init_structs_ACCTEST(struct ICHT_config *conf) {
+    conf->device_number = ICHT_DEFAULT_SLAVE_ADDR;
+    conf->read = &ICHT_psoc_i2c_read;
+    conf->write = &ICHT_psoc_i2c_write;
+    // Zero the struct
+    struct ICHT_reg_list reg_list = {0};
+
+    struct ICHT_ADC_Val_R ADC_Val_R = {
+        .channel = ICHT_CHANNEL_1,
+        .ADC = 0
+    };
+    reg_list.ADC1 = ADC_Val_R;
+    ADC_Val_R.channel = ICHT_CHANNEL_2;
+    reg_list.ADC2 = ADC_Val_R;
+    
+    // Default configuration settings for W channels
+    struct ICHT_ADC_Config ADC_Config = {
+        .channel = ICHT_CHANNEL_1,
+        .disable_PLR = true, // Using internal PLR
+        .enable_external_capacitor = true,
+        .enable_offset_compensation = true,
+        .mode = ICHT_ACC_ENABLE,
+        .source = ICHT_ADCC_SRC_DISABLED
+    };
+     
+    // Configure settings same for CHN 1 and 2
+    reg_list.ADCCONFIG1 = ADC_Config;
+    ADC_Config.channel = ICHT_CHANNEL_2;
+    ADC_Config.disable_channel = true; // Disable channel 2 for now
+    reg_list.ADCCONFIG2 = ADC_Config;
+    
+    reg_list.RMD1.channel = ICHT_CHANNEL_1;
+    reg_list.RMD2.channel = ICHT_CHANNEL_2;
+    
+    
+    /* TODO - DOUBLE CHECK Electrical Characteristic 108
+       at a supply voltage of 5V.
+     */
+    /* 
+       RLD63NPC8 N-Diode Laser has max of 80mA
+       Documentation isn't consistent, assuming
+       max of RACC_LO is 80mA, can set to MAX
+       Max voltage of 2.6V
+     */
+
+    reg_list.ILIM2.channel = ICHT_CHANNEL_2;
+    //reg_list.ILIM2.n = 0xFF;
+    //reg_list.ADSNFRACC.range_2 = ICHT_RACC_CURRENT_LO; 
+    // Not high enough to prevent dmg, 5V source - 1.2 = 3.8 > 2.6
+    reg_list.REGCONFIG2.channel = ICHT_CHANNEL_2;
+   // reg_list.REGCONFIG2.sat_threshold = ICHT_RLDKS_VLDK_LT_1_2V;
+
+    /* 
+       D405-120 M diode has a max of 150mA, 120mA typ.
+       Datasheet isn't consistent..
+       Assuming typical shutdown resolution D_I(LDK)
+       of 4 when RACC = HIGH, n = 38?
+       Max voltage of 6V
+       MAX ImoN = .7mA, typical is .4mA
+       With RMD1 = 500ohm, and V = 1.0V, IMon = .20mA
+     */
+    reg_list.ILIM1.channel = ICHT_CHANNEL_1;
+    // ILIM = 0.3-0.8 * 255 =... 80mA - 175mA
+    reg_list.ILIM1.n = 255;
+    reg_list.ADSNFRACC.range_1 = ICHT_RACC_CURRENT_LO;
+    reg_list.REGCONFIG1.channel = ICHT_CHANNEL_1;
+    reg_list.REGCONFIG1.sat_threshold = ICHT_RLDKS_VLDK_LT_0_5V;
+    // With RACCx = 1, and VREF = Max, current should be ~100mA
+    // Can range from 70mA to 160mA
+    reg_list.REGCONFIG1.Vref = 0x3FF;
+    
+    reg_list.mode = ICHT_MODE_SETTING_OP;
+    conf->regs = reg_list;
+}
+
 /** @brief Reads all regs and updates them in the provided struct */
 int8_t ICHT_read_all_regs(struct ICHT_config *conf, struct ICHT_reg_list *reg_list) {
    uint8_t status = ICHT_get_status_regs(conf, &(reg_list->STATUS));

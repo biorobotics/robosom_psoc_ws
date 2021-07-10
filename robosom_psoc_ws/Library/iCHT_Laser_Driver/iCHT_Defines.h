@@ -588,5 +588,5 @@ int8_t ICHT_write_all_regs(struct ICHT_config *conf, struct ICHT_reg_list *reg_l
 int8_t ICHT_read_all_regs(struct ICHT_config *conf, struct ICHT_reg_list *reg_list);
 int8_t ICHT_configure_driver(struct ICHT_config *conf, struct ICHT_reg_list *reg_list);
 int8_t ICHT_write_each_reg_conf(struct ICHT_config *conf, struct ICHT_reg_list *reg_list);
-
+void ICHT_init_structs_ACCTEST(struct ICHT_config *conf);
 #endif /* ICHT_DEFINES_H_ */
