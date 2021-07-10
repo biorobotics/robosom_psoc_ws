@@ -265,8 +265,8 @@ void ICHT_init_structs(struct ICHT_config *conf) {
     // n = 128, RMD1 = 112*(1+(2/100))^(129) = 1440ohms
     // Then under normal case: ~.09mA
     // Instead, assuming normal case with worse min RMD0, we'll use n = 109, with set current of ~
-    // 130*(1+(3.3/100))^(134+1) results in setting to ~.21mA
-    reg_list.RMD1.n = 109;
+    // 130*(1+(3.3/100))^(96+1) results in setting to .25mA~.33mA
+    reg_list.RMD1.n = 96;
     
     reg_list.mode = ICHT_MODE_SETTING_OP;
     conf->regs = reg_list;
