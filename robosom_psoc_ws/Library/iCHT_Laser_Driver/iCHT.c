@@ -189,23 +189,6 @@ int8_t ICHT_init_test(struct ICHT_config *conf)
         usb_put_string((char8 *)buffer);      
         CyDelay(10);
     }
-    struct ICHT_reg_list reg_list;
-    ICHT_init_structs(conf);
-    status = ICHT_configure_driver(conf, &reg_list);
-    // Can print out individual registers on reg_list to check functionality. For now, printout error flags:
-    if (status != ICHT_NO_ERR){
-        sprintf((char *)buffer, "Failed register set! %d \n", status_2);
-        usb_put_string((char8 *)buffer);
-        CyDelay(10);
-    }
-    else {
-        regs = reg_list.STATUS;
-        sprintf((char *)buffer, "Flags: CFGTIMO %x INITRAM %x LDKSAT1 %x LDKSAT2 %x MPAC1 %x MPAC2 %x MEMERR %x MONC1 %x MONC2 %x OSCERR %x OCV1 %x OCV2 %x OVT %x PDOVDD %x\n", 
-        regs.CFGTIMO, regs.INITRAM, regs.LDKSAT1, regs.LDKSAT2, regs.MAPC1, regs.MAPC2, regs.MEMERR, regs.MONC1, regs.MONC2, regs.OSCERR, regs.OVC1, regs.OVC2, regs.OVT, regs.PDOVDD);
-        usb_put_string((char8 *)buffer);      
-        CyDelay(10);
-    }
-    
     return status;
 }
 
