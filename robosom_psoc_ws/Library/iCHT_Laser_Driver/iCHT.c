@@ -514,8 +514,24 @@ int8_t ICHT_configure_driver(struct ICHT_config *conf, struct ICHT_reg_list *reg
 /** @brief Writes all writeable regs from the provided struct */
 int8_t ICHT_write_each_reg_conf(struct ICHT_config *conf, struct ICHT_reg_list *reg_list)
 {
+
     reg_list->mode = ICHT_MODE_SETTING_CONFIG;
     uint8_t status = ICHT_set_mode(conf, &(reg_list->mode));
+    if (status != ICHT_NO_ERR) return status;
+    CyDelay(1);
+    status = ICHT_set_ADC_Config(conf, &(reg_list->ADCCONFIG1));
+    if (status != ICHT_NO_ERR)
+    {
+       return status;
+    }
+    CyDelay(1);
+    // Return to operation mode
+    reg_list->mode = ICHT_MODE_SETTING_OP;
+    status = ICHT_set_mode(conf, &(reg_list->mode));
+    if (status != ICHT_NO_ERR) return status;
+    CyDelay(1);
+    reg_list->mode = ICHT_MODE_SETTING_CONFIG;
+    status = ICHT_set_mode(conf, &(reg_list->mode));
     if (status != ICHT_NO_ERR) return status;
     CyDelay(1);
     // Clears the status registers
@@ -687,7 +703,13 @@ int8_t ICHT_write_each_reg_conf(struct ICHT_config *conf, struct ICHT_reg_list *
 /** @brief Writes all writeable regs from the provided struct */
 int8_t ICHT_write_all_regs(struct ICHT_config *conf, struct ICHT_reg_list *reg_list)
 {
-   uint8_t status = ICHT_set_overcurrent_thresh(conf, &(reg_list->ILIM1));
+   uint8_t status = ICHT_set_ADC_Config(conf, &(reg_list->ADCCONFIG1));
+   if (status != ICHT_NO_ERR)
+   {
+       return status;
+   }
+    
+   status = ICHT_set_overcurrent_thresh(conf, &(reg_list->ILIM1));
    if (status != ICHT_NO_ERR)
    {
        return status;
