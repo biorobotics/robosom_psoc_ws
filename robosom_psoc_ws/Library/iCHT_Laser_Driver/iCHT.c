@@ -191,6 +191,21 @@ int8_t ICHT_init_test(struct ICHT_config *conf)
         usb_put_string((char8 *)buffer);      
         CyDelay(10);
     }
+    struct ICHT_Error_Regs errors;
+    status = ICHT_get_error_regs(conf, &errors);
+    if (status != ICHT_NO_ERR)
+    {
+        sprintf((char *)buffer, "Failed status reg read %d!\n", status);
+        usb_put_string((char8 *)buffer);
+        CyDelay(10);
+        //return status;   
+    }
+    else {    
+        sprintf((char *)buffer, "Flags: MLDKSAT1 %x MLDKSAT2 %x MMONC %x MOSCERR %x SOSCERR %x SOVC1 %x SOVC2 %x SOVT %x\n", 
+        errors.MLDKSAT1, errors.MLDKSAT2, errors.MMONC, errors.MOSCERR, errors.SOSCERR, errors.SOVC1, errors.SOVC2, errors.SOVT);
+        usb_put_string((char8 *)buffer);      
+        CyDelay(10);
+    }
     return status;
 }
 
@@ -301,7 +316,7 @@ void ICHT_init_structs_ACCTEST(struct ICHT_config *conf) {
         .enable_external_capacitor = true,
         .enable_offset_compensation = true,
         .mode = ICHT_ACC_ENABLE,
-        .source = ICHT_ADCC_SRC_DISABLED
+        .source = ICHT_ADCC_SRC_DISABLED,
         .disable_channel = false
     };
      
