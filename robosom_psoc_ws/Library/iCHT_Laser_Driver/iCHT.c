@@ -239,12 +239,14 @@ void ICHT_init_structs(struct ICHT_config *conf) {
      */
 
     reg_list.ILIM2.channel = ICHT_CHANNEL_2;
+    reg_list.ILIM2.n = ICHT_ILIM_RANGE_MIN;
     //reg_list.ILIM2.n = 0xFF;
-    //reg_list.ADSNFRACC.range_2 = ICHT_RACC_CURRENT_LO; 
+    reg_list.ADSNFRACC.range_2 = ICHT_RACC_CURRENT_LO; 
     // Not high enough to prevent dmg, 5V source - 1.2 = 3.8 > 2.6
     reg_list.REGCONFIG2.channel = ICHT_CHANNEL_2;
-   // reg_list.REGCONFIG2.sat_threshold = ICHT_RLDKS_VLDK_LT_1_2V;
-
+    reg_list.REGCONFIG2.sat_threshold = ICHT_RLDKS_VLDK_LT_1_2V;
+    reg_list.RMD2.n = 96;
+    reg_list.REGCONFIG2.Vref = ICHT_REF_RANGE_MIN;
     /* 
        D405-120 M diode has a max of 150mA, 120mA typ.
        Datasheet isn't consistent..
@@ -319,6 +321,7 @@ void ICHT_init_structs_ACCTEST(struct ICHT_config *conf) {
      */
 
     reg_list.ILIM2.channel = ICHT_CHANNEL_2;
+    reg_list.ILIM2.n = ICHT_ILIM_RANGE_MIN;
     //reg_list.ILIM2.n = 0xFF;
     //reg_list.ADSNFRACC.range_2 = ICHT_RACC_CURRENT_LO; 
     // Not high enough to prevent dmg, 5V source - 1.2 = 3.8 > 2.6
