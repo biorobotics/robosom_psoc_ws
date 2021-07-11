@@ -129,9 +129,13 @@ int main(void)
     struct ICHT_config config;
 
     //imu_bmi160_read_steps();
-    sprintf((char *)buffer, "Connected!\n");
+    sprintf((char *)buffer, "Connected!...\n");
 
     usb_put_string((char8 *)buffer);
+    
+    while (0u == USBUART_CDCIsReady()){
+        usb_configuration_reinit();
+    } // LL: Add this so the system will wait for USBUART to be established, no idea why the earlier one did not work...
     
     int8_t status;
     struct ICHT_reg_list reg_list;
@@ -140,6 +144,9 @@ int main(void)
     //ICHT_init_structs_ACCTEST(&config);
     //status = ICHT_configure_driver(&config, &reg_list);
     status = ICHT_write_each_reg_conf(&config, &reg_list);
+
+    sprintf((char *)buffer, "Failed register set! %d \n", status);
+    
     // Can print out individual registers on reg_list to check functionality. For now, printout error flags:
     if (status != ICHT_NO_ERR){
         sprintf((char *)buffer, "Failed register set! %d \n", status);
