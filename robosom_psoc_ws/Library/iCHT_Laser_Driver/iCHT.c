@@ -169,16 +169,18 @@ int8_t ICHT_init_test(struct ICHT_config *conf)
     }
     
     uint8_t rev;
-    status_2 = ICHT_get_chip_rev(conf, &rev);
+    struct ICHT_ADC_Val_R ADC_R;
+    ADC_R.channel = ICHT_CHANNEL_1;
+    status_2 = ICHT_get_ADC(conf, &ADC_R);
     if (status_2 != ICHT_NO_ERR)
     {
-        sprintf((char *)buffer, "Failed CHIPREV read! %d \n", status_2);
+        sprintf((char *)buffer, "Failed ADC read! %d \n", status_2);
         usb_put_string((char8 *)buffer);
         CyDelay(10);
         //return status_2;   
     }
     else {
-        sprintf((char *)buffer, "CHIPREV: %x\n", rev);
+        sprintf((char *)buffer, "ADC Val (MDA) @ CHN 1: %x\n", ADC_R.ADC);
         usb_put_string((char8 *)buffer);
         CyDelay(10);
     }
@@ -215,7 +217,8 @@ void ICHT_init_structs(struct ICHT_config *conf) {
         .enable_external_capacitor = true,
         .enable_offset_compensation = true,
         .mode = ICHT_APC_ENABLE,
-        .source = ICHT_ADCC_SRC_DISABLED
+        .source = ICHT_ADCC_SRC_MDA_PLR,
+        .disable_channel = false
     };
      
     // Configure settings same for CHN 1 and 2
@@ -259,6 +262,7 @@ void ICHT_init_structs(struct ICHT_config *conf) {
     reg_list.ILIM1.channel = ICHT_CHANNEL_1;
     reg_list.ILIM1.n = 38;
     reg_list.ADSNFRACC.range_1 = ICHT_RACC_CURRENT_HI;
+    reg_list.ADSNFRACC.source_1 = ICHT_ADSNF_MDA;
     reg_list.REGCONFIG1.channel = ICHT_CHANNEL_1;
     reg_list.REGCONFIG1.sat_threshold = ICHT_RLDKS_VLDK_LT_0_5V;
     // VRef = VRef Max, ~1.1 to 1.0V
@@ -298,6 +302,7 @@ void ICHT_init_structs_ACCTEST(struct ICHT_config *conf) {
         .enable_offset_compensation = true,
         .mode = ICHT_ACC_ENABLE,
         .source = ICHT_ADCC_SRC_DISABLED
+        .disable_channel = false
     };
      
     // Configure settings same for CHN 1 and 2
