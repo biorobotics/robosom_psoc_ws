@@ -239,7 +239,7 @@ void ICHT_init_structs(struct ICHT_config *conf) {
     // Configure settings same for CHN 1 and 2
     reg_list.ADCCONFIG1 = ADC_Config;
     ADC_Config.channel = ICHT_CHANNEL_2;
-    ADC_Config.disable_channel = true; // Disable channel 2 for now
+    //ADC_Config.disable_channel = true; // Disable channel 2 for now
     reg_list.ADCCONFIG2 = ADC_Config;
     
     reg_list.RMD1.channel = ICHT_CHANNEL_1;
@@ -257,14 +257,19 @@ void ICHT_init_structs(struct ICHT_config *conf) {
      */
 
     reg_list.ILIM2.channel = ICHT_CHANNEL_2;
-    reg_list.ILIM2.n = ICHT_ILIM_RANGE_MIN;
+    reg_list.ILIM2.n = 45;
     //reg_list.ILIM2.n = 0xFF;
     reg_list.ADSNFRACC.range_2 = ICHT_RACC_CURRENT_LO; 
     // Not high enough to prevent dmg, 5V source - 1.2 = 3.8 > 2.6
     reg_list.REGCONFIG2.channel = ICHT_CHANNEL_2;
-    reg_list.REGCONFIG2.sat_threshold = ICHT_RLDKS_VLDK_LT_1_2V;
-    reg_list.RMD2.n = 96;
-    reg_list.REGCONFIG2.Vref = ICHT_REF_RANGE_MIN;
+    reg_list.REGCONFIG2.sat_threshold = ICHT_RLDKS_VLDK_LT_0_5V;
+    // Assuming worse case with least resistance, min resistance allowed for .15mA would be:
+    // n = 128, RMD1 = 112*(1+(2/100))^(129) = 1440ohms
+    // Then under normal case: ~.09mA
+    // Instead, assuming normal case with worse min RMD0, we'll use n = 96, with set current of ~
+    // 130*(1+(3.3/100))^(120+1) results in setting to ~.15mA
+    reg_list.RMD2.n = 120;
+    reg_list.REGCONFIG2.Vref = 0x3FF;
     /* 
        D405-120 M diode has a max of 150mA, 120mA typ.
        Datasheet isn't consistent..
@@ -286,8 +291,8 @@ void ICHT_init_structs(struct ICHT_config *conf) {
     // n = 128, RMD1 = 112*(1+(2/100))^(129) = 1440ohms
     // Then under normal case: ~.09mA
     // Instead, assuming normal case with worse min RMD0, we'll use n = 96, with set current of ~
-    // 130*(1+(3.3/100))^(96+1) results in setting to .25mA~.33mA
-    reg_list.RMD1.n = 96;
+    // 130*(1+(3.3/100))^(85+1) results in setting to ~.45mA
+    reg_list.RMD1.n = 85;
     
     reg_list.mode = ICHT_MODE_SETTING_OP;
     conf->regs = reg_list;
@@ -323,7 +328,7 @@ void ICHT_init_structs_ACCTEST(struct ICHT_config *conf) {
     // Configure settings same for CHN 1 and 2
     reg_list.ADCCONFIG1 = ADC_Config;
     ADC_Config.channel = ICHT_CHANNEL_2;
-    ADC_Config.disable_channel = true; // Disable channel 2 for now
+    //ADC_Config.disable_channel = true; // Disable channel 2 for now
     reg_list.ADCCONFIG2 = ADC_Config;
     
     reg_list.RMD1.channel = ICHT_CHANNEL_1;
@@ -341,11 +346,11 @@ void ICHT_init_structs_ACCTEST(struct ICHT_config *conf) {
      */
 
     reg_list.ILIM2.channel = ICHT_CHANNEL_2;
-    reg_list.ILIM2.n = ICHT_ILIM_RANGE_MIN;
-    //reg_list.ILIM2.n = 0xFF;
-    //reg_list.ADSNFRACC.range_2 = ICHT_RACC_CURRENT_LO; 
+    reg_list.ILIM2.n = 45;
+    reg_list.ADSNFRACC.range_2 = ICHT_RACC_CURRENT_LO; 
     // Not high enough to prevent dmg, 5V source - 1.2 = 3.8 > 2.6
     reg_list.REGCONFIG2.channel = ICHT_CHANNEL_2;
+    reg_list.REGCONFIG2.sat_threshold = ICHT_RLDKS_VLDK_LT_0_5V;
    // reg_list.REGCONFIG2.sat_threshold = ICHT_RLDKS_VLDK_LT_1_2V;
 
     /* 
@@ -366,6 +371,9 @@ void ICHT_init_structs_ACCTEST(struct ICHT_config *conf) {
     // With RACCx = 1, and VREF = Max, current should be ~100mA
     // Can range from 70mA to 160mA
     reg_list.REGCONFIG1.Vref = 0x3FF;
+    
+    // With RACCx = 1, and VREF = 26, current should be ~15mA
+    reg_list.REGCONFIG2.Vref = 26;
     
     reg_list.mode = ICHT_MODE_SETTING_OP;
     conf->regs = reg_list;

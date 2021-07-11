@@ -374,11 +374,13 @@ void Isr_second_handler(void)
             light_status = LSR_DISABLE;
             LED_DRIVER_WriteCompare(PWM_LASER_OFF);
             Laser_En_1_Write(1);
+            Laser_En_2_Write(1);
         }
         else if (light_status == LSR_DISABLE) {
             light_status = LSR_ENABLE;
             LED_DRIVER_WriteCompare(pwm_led_val);
             Laser_En_1_Write(0);
+            Laser_En_2_Write(0);
         }
     }
     
