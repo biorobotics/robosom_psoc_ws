@@ -138,12 +138,11 @@ int main(void)
     } // LL: Add this so the system will wait for USBUART to be established, no idea why the earlier one did not work...
     
     int8_t status;
-    struct ICHT_reg_list reg_list;
     ICHT_init_structs(&config);
     // Uncomment and comment above to enable ACC mode
     //ICHT_init_structs_ACCTEST(&config);
-    status = ICHT_configure_driver(&config, &reg_list);
-    //status = ICHT_write_each_reg_conf(&config, &reg_list);
+    status = ICHT_configure_driver(&config, &(config.regs));
+    //status = ICHT_write_each_reg_conf(&config, &(config.regs));
 
     sprintf((char *)buffer, "Failed register set! %d \n", status);
     
