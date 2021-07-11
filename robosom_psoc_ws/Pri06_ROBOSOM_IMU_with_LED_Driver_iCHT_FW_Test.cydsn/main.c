@@ -142,8 +142,8 @@ int main(void)
     ICHT_init_structs(&config);
     // Uncomment and comment above to enable ACC mode
     //ICHT_init_structs_ACCTEST(&config);
-    //status = ICHT_configure_driver(&config, &reg_list);
-    status = ICHT_write_each_reg_conf(&config, &reg_list);
+    status = ICHT_configure_driver(&config, &reg_list);
+    //status = ICHT_write_each_reg_conf(&config, &reg_list);
 
     sprintf((char *)buffer, "Failed register set! %d \n", status);
     
