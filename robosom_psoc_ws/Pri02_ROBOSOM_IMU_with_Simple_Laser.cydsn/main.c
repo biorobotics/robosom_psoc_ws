@@ -33,6 +33,7 @@ int8_t imu_bmi160_read_steps(void);
 // USBUART
 #define USBFS_DEVICE    (0u)
 #define USBUART_BUFFER_SIZE (256u)
+#define MAX_LED_VAL (10)
 uint16 count;
 uint8 buffer[USBUART_BUFFER_SIZE];
 void USBUART_user_check_init(void);
@@ -64,8 +65,8 @@ enum shutter_active_state {
 uint8_t frame_status = NO_FRAME;
 uint8_t light_status = LSR_DISABLE;
 uint8_t pulse_enabled = 1;
-uint8_t pwm_laser_val = 50;
-
+uint8_t pwm_led_val = MAX_LED_VAL/2;
+bool started = false;
 // Testing Functions
 void print_imu_via_usbuart(void);
 void print_exposure_timestamp(void);
@@ -77,6 +78,7 @@ void sys_clock_us_callback(void); // 1ms callback interrupt function
 void Isr_shutter_handler(void); // Shutter Active interrupt handler
 
 void Isr_second_handler(void); // Timestamp second counter
+void Isr_Light_Toggle(void); // Light/LED toggle interrupt handler
 
 int main(void)
 {
@@ -85,12 +87,12 @@ int main(void)
     
     /* Sets up the GPIO interrupt and enables it */
     isr_EXPOSURE_ACT_StartEx(Isr_shutter_handler);
+    isr_LIGHT_TOGGLE_StartEx(Isr_Light_Toggle);
     
     // USBUART Init
     init_usb_comm();
-    USBUART_Start(USBFS_DEVICE, USBUART_5V_OPERATION);
     USBUART_CDC_Init();
-    CyGlobalIntEnable; /* Enable global interrupts. */
+
     // I2C Init
     I2C_1_Start();
     us_clock_Start();
@@ -102,7 +104,7 @@ int main(void)
     imu_bmi160_enable_step_counter();
     
     // PWM Block Init
-    PWM_LED_Start();
+    LED_DRIVER_Start();
     //PWM_LASER_Start();
     //PWM_BUZZER_Start();
     //PWM_BUZZER_EN_Start();
@@ -111,8 +113,8 @@ int main(void)
     Led_Red_Write(0);
     Led_Green_Write(0);
     Led_Blue_Write(0);
-    PLED_Write(1);
-  
+    //PLED_Write(1);
+    CyGlobalIntEnable; /* Enable global interrupts. */
     
 
     /* For initial testing, establish USB communication before attempting to send first trigger frame */
@@ -124,31 +126,45 @@ int main(void)
     
     // Trigger first Ximea trigger pulse - Might want to link this to a button for manual triggering.
     Trig_Pulser_Start();
-    Trigger_Reg_Write(1);
+
     
     struct ICHT_config config;
 
     //imu_bmi160_read_steps();
-    sprintf((char *)buffer, "Connected!\n");
+     
+    int8_t status;
+    ICHT_init_structs(&config);
+    // Uncomment and comment above to enable ACC mode
+    //ICHT_init_structs_ACCTEST(&config);
+    status = ICHT_configure_driver(&config, &(config.regs));
 
-    usb_put_string((char8 *)buffer);
+    // Can print out individual registers on reg_list to debug. For now, printout error flags:
+    if (status != ICHT_NO_ERR){
+        sprintf((char *)buffer, "Failed register set! %d \n", status);
+        usb_put_string((char8 *)buffer);
+        CyDelay(10);
+
+    }
+    /*
+    else {
+        struct ICHT_Status_Regs_R regs; 
+        regs = config.regs.STATUS;
+        sprintf((char *)buffer, "Flags: CFGTIMO %x INITRAM %x LDKSAT1 %x LDKSAT2 %x MPAC1 %x MPAC2 %x MEMERR %x MONC1 %x MONC2 %x OSCERR %x OCV1 %x OCV2 %x OVT %x PDOVDD %x\n", 
+        regs.CFGTIMO, regs.INITRAM, regs.LDKSAT1, regs.LDKSAT2, regs.MAPC1, regs.MAPC2, regs.MEMERR, regs.MONC1, regs.MONC2, regs.OSCERR, regs.OVC1, regs.OVC2, regs.OVT, regs.PDOVDD);
+        usb_put_string((char8 *)buffer);      
+        CyDelay(10);
+    }
+    */
     
     for(;;)
     {
         
         bool reconfigured = false;
         reconfigured = usb_configuration_reinit();
-        CyDelay(1000); // LL reduced this to 1 sec delay
-        sprintf((char *)buffer, "TEST!\n");
-
-        usb_put_string((char8 *)buffer);
-       
-        ICHT_init_test(&config);
         
-        // /* - // LL remote the comment to see if IMU is still functioning
         imu_bmi160_read_acc_gyo();
         imu_bmi160_read_steps();
-        
+
         //USBUART_user_echo();
         print_imu_via_usbuart();
         
@@ -164,19 +180,21 @@ int main(void)
             read_count = USBUART_user_check_read();
             serial_input = buffer_read[0];
             //serial_input = usb_get_char(&reconfigured);
-        
-            pwm_laser_val = serial_input & 0b01111111; // Mask for last 7 bits
+            pwm_led_val = serial_input & 0b01111111; // Mask for last 7 bits
             pulse_enabled = serial_input & 0b10000000; // Mask for first bit. - Just disables pulse, can change behavior to disable/enable Laser.
-            // PWM_LASER_WriteCompare(pwm_laser_val);
+            if (pulse_enabled)
+            {
+                Trigger_Reg_Write(1);
+            }
+            // Current max LED val
+            if (pwm_led_val > MAX_LED_VAL) pwm_led_val = MAX_LED_VAL;
+            //PWM_LASER_WriteCompare(pwm_laser_val);
             led_test++;
         }
-        
         
         //Led_Red_Write((led_test >> 0) & 0x01);
         Led_Green_Write((led_test >> 1) & 0x01);
         Led_Blue_Write((led_test >> 2) & 0x01);   
-
-        // */ - // LL remote the comment to see if IMU is still functioning
     }
 }
 
@@ -335,31 +353,41 @@ void print_exposure_timestamp(void)
 void Isr_second_handler(void)
 {
     seconds = seconds + 1;
+    
     isr_time_ClearPending();
     us_clock_ReadStatusRegister();
+}
+
+void Isr_Light_Toggle(void)
+{
+    //if (pulse_enabled) {
+    if (light_status == LSR_ENABLE) {
+        LED_DRIVER_WriteCompare(PWM_LASER_OFF);
+        Laser_En_1_Write(1);
+        light_status = LSR_DISABLE;
+        //PWM_LASER_WriteCompare(PWM_LASER_OFF);
+    }
+    else if (light_status == LSR_DISABLE) {
+        Laser_En_1_Write(0);
+        LED_DRIVER_WriteCompare(pwm_led_val);
+        light_status = LSR_ENABLE;
+        //PWM_LASER_WriteCompare(pwm_laser_val);
+    }
 }
 
 /**
  * @brief Interrupt handler for Shutter Active pin
  */
+
 void Isr_shutter_handler(void)
 {
+    started = true;
     /* Set interrupt flag */
 	frame_status = NEW_FRAME;
     t_e_us = (1000000 - us_clock_ReadCounter());
     t_e_s = seconds;
     /* If pulse mode enabled, alternate LED/LASER */ 
-    if (pulse_enabled) {
-       if (light_status == LSR_ENABLE) {
-            light_status = LSR_DISABLE;
-            //PWM_LASER_WriteCompare(PWM_LASER_OFF);
-        }
-        else if (light_status == LSR_DISABLE) {
-            light_status = LSR_ENABLE;
-            //PWM_LASER_WriteCompare(pwm_laser_val);
-        }
-    }
-        
+
     /* Trigger a new camera frame */
     Trigger_Reg_Write(1);
     
@@ -367,6 +395,8 @@ void Isr_shutter_handler(void)
     Exposure_Active_ClearInterrupt();
     /* Clears the pending pin interrupt */
     isr_EXPOSURE_ACT_ClearPending();
+    /* Clears the pending pin interrupt */
+    isr_LIGHT_TOGGLE_ClearPending();
 
 }
 /* [] END OF FILE */
