@@ -230,7 +230,6 @@ int main(void)
             {
                 toggle_finished = false;
                 Trigger_Reg_Write(1);
-                Trigger_Reg_Write(1);
             }
 
             // Current max LED val
