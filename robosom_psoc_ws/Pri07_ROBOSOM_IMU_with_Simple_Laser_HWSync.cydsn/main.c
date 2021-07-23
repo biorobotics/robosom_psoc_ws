@@ -43,12 +43,9 @@ uint16 USBUART_user_check_read(void);
 uint16 read_count;
 uint8 buffer_read[USBUART_BUFFER_SIZE];
 uint8 serial_input = 0;
-bool toggle_finished = true;
 
 // Exposure activate timestamps
 uint32_t seconds = 0;
-uint32_t set_secs = 0;
-uint32_t set_us = 0;
 uint32 t_e_us = 0;
 uint32 t_e_s = 0;
 
@@ -66,9 +63,8 @@ enum shutter_active_state {
 } shutter_state;
 
 uint8_t frame_status = NO_FRAME;
-uint8_t laser_enable = LSR_DISABLE;
+uint8_t light_status = LSR_DISABLE;
 uint8_t pulse_enabled = 1;
-uint8_t trigger_frame = 1;
 uint8_t pwm_led_val = MAX_LED_VAL/2;
 bool started = false;
 // Testing Functions
@@ -82,6 +78,7 @@ void sys_clock_us_callback(void); // 1ms callback interrupt function
 void Isr_shutter_handler(void); // Shutter Active interrupt handler
 
 void Isr_second_handler(void); // Timestamp second counter
+void Isr_Light_Toggle(void); // Light/LED toggle interrupt handler
 
 int main(void)
 {
@@ -90,6 +87,7 @@ int main(void)
     
     /* Sets up the GPIO interrupt and enables it */
     isr_EXPOSURE_ACT_StartEx(Isr_shutter_handler);
+    isr_LIGHT_TOGGLE_StartEx(Isr_Light_Toggle);
     
     // USBUART Init
     init_usb_comm();
@@ -182,57 +180,12 @@ int main(void)
             read_count = USBUART_user_check_read();
             serial_input = buffer_read[0];
             //serial_input = usb_get_char(&reconfigured);
-            pwm_led_val = serial_input & 0b0001111; // Mask for first 4 bits
-            trigger_frame = (serial_input & 0b00010000) >> 4; // Mask for LSB of 1st byte, hardware frame trigger
-            // Mask for 6th position bit, handles state of the laser. LED on when laser off.
-            laser_enable = (serial_input & 0b00100000) >> 5;
-            bool set_time = (serial_input & 0b01000000) >> 6;
-            if (read_count == 9 && set_time) {
-                int i;
-                uint8_t *buffer_ptr = &(buffer_read[1]);
-                set_us = 0;
-                set_secs = 0;
-                for (i = 0; i < 4; i++) 
-                {
-                    set_us = set_us << 8;
-                    set_us |= *buffer_ptr;
-                    buffer_ptr++;
-                }
-                for (i = 0; i < 4; i++)
-                {
-                    set_secs = set_secs << 8;
-                    set_secs |= *buffer_ptr;
-                    buffer_ptr++;
-                }
-                us_clock_Stop();
-                if (set_us >= 1000000)
-                {
-                    // us counter must be less than 1 sec
-                    set_us = 999999;
-                }
-                us_clock_WriteCounter(set_us);
-                seconds = set_secs;
-                us_clock_Enable();
-            }
-            if (laser_enable == LSR_ENABLE) {
-                LED_DRIVER_WriteCompare(PWM_LASER_OFF);
-                Laser_En_1_Write(1);
-                //light_status = LSR_DISABLE;
-                //PWM_LASER_WriteCompare(PWM_LASER_OFF);
-            }
-            else if (laser_enable == LSR_DISABLE) {
-                Laser_En_1_Write(0);
-                LED_DRIVER_WriteCompare(pwm_led_val);
-                //light_status = LSR_ENABLE;
-                //PWM_LASER_WriteCompare(pwm_laser_val);
-            }
-            if (trigger_frame)
+            pwm_led_val = serial_input & 0b01111111; // Mask for last 7 bits
+            pulse_enabled = serial_input & 0b10000000; // Mask for first bit. - Just disables pulse, can change behavior to disable/enable Laser.
+            if (pulse_enabled)
             {
-                toggle_finished = false;
-                Trigger_Reg_Write(1);
                 Trigger_Reg_Write(1);
             }
-
             // Current max LED val
             if (pwm_led_val > MAX_LED_VAL) pwm_led_val = MAX_LED_VAL;
             //PWM_LASER_WriteCompare(pwm_laser_val);
@@ -405,6 +358,23 @@ void Isr_second_handler(void)
     us_clock_ReadStatusRegister();
 }
 
+void Isr_Light_Toggle(void)
+{
+    //if (pulse_enabled) {
+    if (light_status == LSR_ENABLE) {
+        LED_DRIVER_WriteCompare(PWM_LASER_OFF);
+        Laser_En_1_Write(1);
+        light_status = LSR_DISABLE;
+        //PWM_LASER_WriteCompare(PWM_LASER_OFF);
+    }
+    else if (light_status == LSR_DISABLE) {
+        Laser_En_1_Write(0);
+        LED_DRIVER_WriteCompare(pwm_led_val);
+        light_status = LSR_ENABLE;
+        //PWM_LASER_WriteCompare(pwm_laser_val);
+    }
+}
+
 /**
  * @brief Interrupt handler for Shutter Active pin
  */
@@ -416,11 +386,17 @@ void Isr_shutter_handler(void)
 	frame_status = NEW_FRAME;
     t_e_us = (1000000 - us_clock_ReadCounter());
     t_e_s = seconds;
+    /* If pulse mode enabled, alternate LED/LASER */ 
+
+    /* Trigger a new camera frame */
+    Trigger_Reg_Write(1);
     
     /* Clears the pin interrupt */
     Exposure_Active_ClearInterrupt();
     /* Clears the pending pin interrupt */
     isr_EXPOSURE_ACT_ClearPending();
+    /* Clears the pending pin interrupt */
+    isr_LIGHT_TOGGLE_ClearPending();
 
 }
 /* [] END OF FILE */
