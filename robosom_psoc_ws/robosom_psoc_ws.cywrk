@@ -19,7 +19,7 @@
 <v>.\Pri02_ROBOSOM_V2R2_IMU_Test.cydsn\Pri02_ROBOSOM_V2R2_IMU_Test.cyprj</v>
 <v>.\Pri00_ROBOSOM_V2R2_Bootloader.cydsn\Pri00_ROBOSOM_V2R2_Bootloader.cyprj</v>
 <v>.\Pri06_ROBOSOM_IMU_with_LED_Driver_iCHT_FW_Test.cydsn\Pri06_ROBOSOM_IMU_with_LED_Driver_iCHT_FW_Test.cyprj</v>
-<v>.\Pri02_ROBOSOM_IMU_with_Simple_Laser_HWSync.cydsn\Pri02_ROBOSOM_IMU_with_Simple_Laser_HWSync.cyprj</v>
+<v>.\Pri07_ROBOSOM_IMU_with_Simple_Laser_HWSync.cydsn\Pri07_ROBOSOM_IMU_with_Simple_Laser_HWSync.cyprj</v>
 </projects>
 <workspace_id v="43adb24a-68a4-4637-884f-83778c930dfb" />
 <WriteAppVersionLastSavedWith v="4.4.0.80" />

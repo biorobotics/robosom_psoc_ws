@@ -34,16 +34,19 @@ int8_t imu_bmi160_read_steps(void);
 #define USBFS_DEVICE    (0u)
 #define USBUART_BUFFER_SIZE (256u)
 #define MAX_LED_VAL (10)
+#define TRIGGER_DELAY_TIMEOUT (250) // Timeout set to 250ms 
 uint16 count;
 uint8 buffer[USBUART_BUFFER_SIZE];
 void USBUART_user_check_init(void);
 void USBUART_user_echo(void);
+void sys_clock_ms_callback(void);
 uint16 USBUART_user_check_read(void);
 
 uint16 read_count;
 uint8 buffer_read[USBUART_BUFFER_SIZE];
 uint8 serial_input = 0;
 bool toggle_finished = true;
+bool delayed_trigger = false;
 
 // Exposure activate timestamps
 uint32_t seconds = 0;
@@ -51,6 +54,9 @@ uint32_t set_secs = 0;
 uint32_t set_us = 0;
 uint32 t_e_us = 0;
 uint32 t_e_s = 0;
+uint32_t trigger_timestamps_msecs = 0;
+uint32_t mcu_secs = 0;
+uint32_t mcu_msecs = 0;
 
 /* Laser/Shutter specific vars */
 #define PWM_LASER_OFF (0)
@@ -82,14 +88,20 @@ void sys_clock_us_callback(void); // 1ms callback interrupt function
 void Isr_shutter_handler(void); // Shutter Active interrupt handler
 
 void Isr_second_handler(void); // Timestamp second counter
+void toggle_laser_led(void);
+void print_skipped_frame(uint8_t led_pwm, bool laser_enable);
 
 int main(void)
 {
     uint8_t led_test = 0;
     buffer[0] = 1;
-    
+
     /* Sets up the GPIO interrupt and enables it */
     isr_EXPOSURE_ACT_StartEx(Isr_shutter_handler);
+    /* Clears the pin interrupt */
+    //Exposure_Active_ClearInterrupt();
+    /* Clears the pending pin interrupt */
+    isr_EXPOSURE_ACT_ClearPending();
     
     // USBUART Init
     init_usb_comm();
@@ -104,6 +116,11 @@ int main(void)
     imu_bmi160_init();
     imu_bmi160_config();
     imu_bmi160_enable_step_counter();
+    
+    // Start system 1ms tick
+    CySysTickStart();
+    CySysTickSetCallback(0, sys_clock_ms_callback);
+    CySysTickEnableInterrupt();
     
     // PWM Block Init
     LED_DRIVER_Start();
@@ -182,7 +199,11 @@ int main(void)
             read_count = USBUART_user_check_read();
             serial_input = buffer_read[0];
             //serial_input = usb_get_char(&reconfigured);
+            //uint8_t prev_pwm = pwm_led_val;
+            //bool prev_laser_enable = laser_enable;
             pwm_led_val = serial_input & 0b0001111; // Mask for first 4 bits
+            // Current max LED val
+            if (pwm_led_val > MAX_LED_VAL) pwm_led_val = MAX_LED_VAL;
             trigger_frame = (serial_input & 0b00010000) >> 4; // Mask for LSB of 1st byte, hardware frame trigger
             // Mask for 6th position bit, handles state of the laser. LED on when laser off.
             laser_enable = (serial_input & 0b00100000) >> 5;
@@ -214,26 +235,30 @@ int main(void)
                 seconds = set_secs;
                 us_clock_Enable();
             }
-            if (laser_enable == LSR_ENABLE) {
-                LED_DRIVER_WriteCompare(PWM_LASER_OFF);
-                Laser_En_1_Write(1);
-                //light_status = LSR_DISABLE;
-                //PWM_LASER_WriteCompare(PWM_LASER_OFF);
-            }
-            else if (laser_enable == LSR_DISABLE) {
-                Laser_En_1_Write(0);
-                LED_DRIVER_WriteCompare(pwm_led_val);
-                //light_status = LSR_ENABLE;
-                //PWM_LASER_WriteCompare(pwm_laser_val);
-            }
-            if (trigger_frame)
-            {
-                toggle_finished = false;
-                Trigger_Reg_Write(1);
+            if (trigger_frame){
+                __disable_irq(); // Need to atomically check state of toggle + set delayed_trigger
+                // Still possible signal could be missed while irq disabled?
+                if (toggle_finished) {
+                    toggle_finished = false;
+                    toggle_laser_led();
+                    trigger_timestamps_msecs = (mcu_msecs + TRIGGER_DELAY_TIMEOUT);
+                    
+                }
+                else if (((int32_t)(trigger_timestamps_msecs - mcu_msecs)) <= 0)
+                {
+                    toggle_finished = false;
+                    toggle_laser_led();
+                    trigger_timestamps_msecs = (mcu_msecs + TRIGGER_DELAY_TIMEOUT);
+                }
+                else {
+                    // Otherwise, skip this frame- Too soon. Report to PC frame skipped.
+                    // If Laser/LED is changed here, OK? PC shouldn't send multiple commands before waiting for frame.
+                    print_skipped_frame(pwm_led_val, prev_laser_enable);
+                }
+               __enable_irq();
             }
 
-            // Current max LED val
-            if (pwm_led_val > MAX_LED_VAL) pwm_led_val = MAX_LED_VAL;
+
             //PWM_LASER_WriteCompare(pwm_laser_val);
             led_test++;
         }
@@ -311,6 +336,23 @@ int8_t imu_bmi160_enable_step_counter(void)
 
 }
 
+void toggle_laser_led(void)
+{
+    if (laser_enable == LSR_ENABLE) {
+        LED_DRIVER_WriteCompare(PWM_LASER_OFF);
+        Laser_En_1_Write(1);
+        //light_status = LSR_DISABLE;
+        //PWM_LASER_WriteCompare(PWM_LASER_OFF);
+    }
+    else if (laser_enable == LSR_DISABLE) {
+        Laser_En_1_Write(0);
+        LED_DRIVER_WriteCompare(pwm_led_val);
+        //light_status = LSR_ENABLE;
+        //PWM_LASER_WriteCompare(pwm_laser_val);
+    }
+    Trigger_Reg_Write(1);   
+}
+
 int8_t imu_bmi160_read_steps(void)
 {
     int8_t rslt = BMI160_OK;
@@ -381,6 +423,18 @@ void print_imu_via_usbuart(void)
     usb_put_string((char8 *)buffer);
 }
 
+void print_skipped_frame(uint8_t led_pwm, bool laser_enable)
+{
+    uint32 t_us = (1000000 - us_clock_ReadCounter());//cur_time_us();//second_rounded_us();
+    uint32 t_s = seconds;//cur_time_s();//uptime_s();
+    while (0u == USBUART_CDCIsReady())
+    {
+    }
+    sprintf((char *)buffer, "E:%lu\t%lu\t%d\t%d\r\n", t_us, t_s, led_pwm, laser_enable);
+
+    usb_put_string((char8 *)buffer);
+}
+
 void print_exposure_timestamp(void)
 {   
     while (0u == USBUART_CDCIsReady())
@@ -399,7 +453,6 @@ void print_exposure_timestamp(void)
 void Isr_second_handler(void)
 {
     seconds = seconds + 1;
-    
     isr_time_ClearPending();
     us_clock_ReadStatusRegister();
 }
@@ -415,11 +468,18 @@ void Isr_shutter_handler(void)
 	frame_status = NEW_FRAME;
     t_e_us = (1000000 - us_clock_ReadCounter());
     t_e_s = seconds;
-    
-    /* Clears the pin interrupt */
-    Exposure_Active_ClearInterrupt();
+    toggle_finished = true;
+
     /* Clears the pending pin interrupt */
     isr_EXPOSURE_ACT_ClearPending();
+    /* Clears the pin interrupt */
+    //Exposure_Active_ClearInterrupt();
+    /* Clears the pending pin interrupt */
+    //isr_EXPOSURE_ACT_ClearPending();
+}
 
+// 1ms system tick callback interrupt function
+void sys_clock_ms_callback(void){
+    mcu_msecs ++; // increment ms counter by 1
 }
 /* [] END OF FILE */
