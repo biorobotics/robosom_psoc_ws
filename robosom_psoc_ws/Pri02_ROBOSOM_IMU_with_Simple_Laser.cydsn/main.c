@@ -431,7 +431,7 @@ void print_skipped_frame(uint8_t led_pwm, bool laser_enable)
     while (0u == USBUART_CDCIsReady())
     {
     }
-    sprintf((char *)buffer, "E:%lu\t%lu\t%d\t%d\r\n", t_us, t_s, led_pwm, laser_enable);
+    sprintf((char *)buffer, "S:%lu\t%lu\t%d\t%d\r\n", t_us, t_s, led_pwm, laser_enable);
 
     usb_put_string((char8 *)buffer);
 }
