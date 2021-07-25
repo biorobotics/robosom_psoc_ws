@@ -200,7 +200,7 @@ int main(void)
             serial_input = buffer_read[0];
             //serial_input = usb_get_char(&reconfigured);
             //uint8_t prev_pwm = pwm_led_val;
-            //bool prev_laser_enable = laser_enable;
+            bool prev_laser_enable = laser_enable;
             pwm_led_val = serial_input & 0b0001111; // Mask for first 4 bits
             // Current max LED val
             if (pwm_led_val > MAX_LED_VAL) pwm_led_val = MAX_LED_VAL;
@@ -253,7 +253,8 @@ int main(void)
                 else {
                     // Otherwise, skip this frame- Too soon. Report to PC frame skipped.
                     // If Laser/LED is changed here, OK? PC shouldn't send multiple commands before waiting for frame.
-                    print_skipped_frame(pwm_led_val, prev_laser_enable);
+                    print_skipped_frame(pwm_led_val, laser_enable);
+                    laser_enable = prev_laser_enable;
                 }
                __enable_irq();
             }
