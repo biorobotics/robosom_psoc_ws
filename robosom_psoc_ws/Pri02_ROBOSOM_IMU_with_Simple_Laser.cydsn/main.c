@@ -90,6 +90,7 @@ void Isr_shutter_handler(void); // Shutter Active interrupt handler
 void Isr_second_handler(void); // Timestamp second counter
 void toggle_laser_led(void);
 void print_skipped_frame(uint8_t led_pwm, bool laser_enable);
+void print_warning_timeout(void);
 
 int main(void)
 {
@@ -200,13 +201,13 @@ int main(void)
             serial_input = buffer_read[0];
             //serial_input = usb_get_char(&reconfigured);
             //uint8_t prev_pwm = pwm_led_val;
-            bool prev_laser_enable = laser_enable;
+            bool temp_laser_enable = (serial_input & 0b00100000) >> 5;
             pwm_led_val = serial_input & 0b0001111; // Mask for first 4 bits
             // Current max LED val
             if (pwm_led_val > MAX_LED_VAL) pwm_led_val = MAX_LED_VAL;
             trigger_frame = (serial_input & 0b00010000) >> 4; // Mask for LSB of 1st byte, hardware frame trigger
             // Mask for 6th position bit, handles state of the laser. LED on when laser off.
-            laser_enable = (serial_input & 0b00100000) >> 5;
+
             bool set_time = (serial_input & 0b01000000) >> 6;
             if (read_count == 9 && set_time) {
                 int i;
@@ -240,23 +241,26 @@ int main(void)
                 // Still possible signal could be missed while irq disabled?
                 if (toggle_finished) {
                     toggle_finished = false;
+                    laser_enable = temp_laser_enable;
+                    __enable_irq();
                     toggle_laser_led();
                     trigger_timestamps_msecs = (mcu_msecs + TRIGGER_DELAY_TIMEOUT);
-                    
                 }
                 else if (((int32_t)(trigger_timestamps_msecs - mcu_msecs)) <= 0)
                 {
                     toggle_finished = false;
+                    laser_enable = temp_laser_enable;
+                    __enable_irq();
                     toggle_laser_led();
                     trigger_timestamps_msecs = (mcu_msecs + TRIGGER_DELAY_TIMEOUT);
+                    print_warning_timeout();
                 }
                 else {
+                    __enable_irq();
                     // Otherwise, skip this frame- Too soon. Report to PC frame skipped.
                     // If Laser/LED is changed here, OK? PC shouldn't send multiple commands before waiting for frame.
-                    print_skipped_frame(pwm_led_val, laser_enable);
-                    laser_enable = prev_laser_enable;
+                    print_skipped_frame(pwm_led_val, temp_laser_enable);
                 }
-               __enable_irq();
             }
 
 
@@ -432,6 +436,18 @@ void print_skipped_frame(uint8_t led_pwm, bool laser_enable)
     {
     }
     sprintf((char *)buffer, "S:%lu\t%lu\t%d\t%d\r\n", t_us, t_s, led_pwm, laser_enable);
+
+    usb_put_string((char8 *)buffer);
+}
+
+void print_warning_timeout(void)
+{
+    uint32 t_us = (1000000 - us_clock_ReadCounter());//cur_time_us();//second_rounded_us();
+    uint32 t_s = seconds;//cur_time_s();//uptime_s();
+    while (0u == USBUART_CDCIsReady())
+    {
+    }
+    sprintf((char *)buffer, "W:%lu\t%lu\r\n", t_us, t_s);
 
     usb_put_string((char8 *)buffer);
 }
