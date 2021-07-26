@@ -51,8 +51,8 @@ bool delayed_trigger = false;
 // Exposure activate timestamps
 uint32_t seconds = 0;
 uint32_t set_secs = 0;
-uint32_t set_us = 0;
-uint32 t_e_us = 0;
+uint32_t set_ns = 0;
+uint32 t_e_ns = 0;
 uint32 t_e_s = 0;
 uint32_t trigger_timestamps_msecs = 0;
 uint32_t mcu_secs = 0;
@@ -91,6 +91,7 @@ void Isr_second_handler(void); // Timestamp second counter
 void toggle_laser_led(void);
 void print_skipped_frame(uint8_t led_pwm, bool laser_enable);
 void print_warning_timeout(void);
+uint32_t get_ns_from_clock(void);
 
 int main(void)
 {
@@ -212,12 +213,12 @@ int main(void)
             if (read_count == 9 && set_time) {
                 int i;
                 uint8_t *buffer_ptr = &(buffer_read[1]);
-                set_us = 0;
+                set_ns = 0;
                 set_secs = 0;
                 for (i = 0; i < 4; i++) 
                 {
-                    set_us = set_us << 8;
-                    set_us |= *buffer_ptr;
+                    set_ns = set_ns << 8;
+                    set_ns |= *buffer_ptr;
                     buffer_ptr++;
                 }
                 for (i = 0; i < 4; i++)
@@ -227,9 +228,10 @@ int main(void)
                     buffer_ptr++;
                 }
                 us_clock_Stop();
-                if (set_us >= 1000000)
+                uint32_t set_us = set_ns/1000;
+                if (set_us >= (1000000))
                 {
-                    // us counter must be less than 1 sec
+                    // ns counter must be less than 1 sec
                     set_us = 999999;
                 }
                 us_clock_WriteCounter(set_us);
@@ -410,14 +412,14 @@ uint16 USBUART_user_check_read(void) {
 
 void print_imu_via_usbuart(void)
 {   
-    uint32 t_us = (1000000 - us_clock_ReadCounter());//cur_time_us();//second_rounded_us();
+    uint32 t_ns = get_ns_from_clock();//cur_time_us();//second_rounded_us();
     uint32 t_s = seconds;//cur_time_s();//uptime_s();
     while (0u == USBUART_CDCIsReady())
     {
     }
 
     // sprintf((char *)buffer, "%d\t%d\t%d\t%d\t%ld\t%ld\t%ld\r\n", step_count, accel.x, accel.y, accel.z, (long)(gyro.x + gyro_offset), (long)(gyro.y + gyro_offset), (long)(gyro.z + gyro_offset));
-    sprintf((char *)buffer, "I:%lu\t%lu\t%d\t%d\t%d\t%d\t%d\t%d\r\n", t_us, t_s, accel.x, accel.y, accel.z, gyro.x, gyro.y, gyro.z);
+    sprintf((char *)buffer, "I:%lu\t%lu\t%d\t%d\t%d\t%d\t%d\t%d\r\n", t_ns, t_s, accel.x, accel.y, accel.z, gyro.x, gyro.y, gyro.z);
     //sprintf((char *)buffer, "%f\t%f\t%f\t%f\t%f\t%f\t%f\r\n", (float)sys_clock_cur_ms/1000 + sys_clock_cur_us_in_ms, 
     //                            (float)accel.x/32768*IMU_ACC_SCALE*9.80665, (float)accel.y/32768*IMU_ACC_SCALE*9.80665,(float)accel.z/32768*IMU_ACC_SCALE*9.80665, 
     //                            (float)gyro.x/32768*IMU_GYO_SCALE, (float)gyro.y/32768*IMU_GYO_SCALE, (float)gyro.z/32768*IMU_GYO_SCALE);
@@ -430,24 +432,24 @@ void print_imu_via_usbuart(void)
 
 void print_skipped_frame(uint8_t led_pwm, bool laser_enable)
 {
-    uint32 t_us = (1000000 - us_clock_ReadCounter());//cur_time_us();//second_rounded_us();
+    uint32 t_ns = get_ns_from_clock();//cur_time_us();//second_rounded_us();
     uint32 t_s = seconds;//cur_time_s();//uptime_s();
     while (0u == USBUART_CDCIsReady())
     {
     }
-    sprintf((char *)buffer, "S:%lu\t%lu\t%d\t%d\r\n", t_us, t_s, led_pwm, laser_enable);
+    sprintf((char *)buffer, "S:%lu\t%lu\t%d\t%d\r\n", t_ns, t_s, led_pwm, laser_enable);
 
     usb_put_string((char8 *)buffer);
 }
 
 void print_warning_timeout(void)
 {
-    uint32 t_us = (1000000 - us_clock_ReadCounter());//cur_time_us();//second_rounded_us();
+    uint32 t_ns = get_ns_from_clock();//cur_time_us();//second_rounded_us();
     uint32 t_s = seconds;//cur_time_s();//uptime_s();
     while (0u == USBUART_CDCIsReady())
     {
     }
-    sprintf((char *)buffer, "W:%lu\t%lu\r\n", t_us, t_s);
+    sprintf((char *)buffer, "W:%lu\t%lu\r\n", t_ns, t_s);
 
     usb_put_string((char8 *)buffer);
 }
@@ -458,7 +460,7 @@ void print_exposure_timestamp(void)
     {
     }
     
-    sprintf((char *)buffer, "E:%lu\t%lu\r\n", t_e_us, t_e_s);
+    sprintf((char *)buffer, "E:%lu\t%lu\r\n", t_e_ns, t_e_s);
     
     usb_put_string((char8 *)(buffer));
 }
@@ -483,7 +485,7 @@ void Isr_shutter_handler(void)
     started = true;
     /* Set interrupt flag */
 	frame_status = NEW_FRAME;
-    t_e_us = (1000000 - us_clock_ReadCounter());
+    t_e_ns = get_ns_from_clock();
     t_e_s = seconds;
     toggle_finished = true;
 
@@ -493,6 +495,11 @@ void Isr_shutter_handler(void)
     //Exposure_Active_ClearInterrupt();
     /* Clears the pending pin interrupt */
     //isr_EXPOSURE_ACT_ClearPending();
+}
+
+uint32_t get_ns_from_clock(void)
+{
+    return (1000000 - us_clock_ReadCounter())*1000;
 }
 
 // 1ms system tick callback interrupt function
