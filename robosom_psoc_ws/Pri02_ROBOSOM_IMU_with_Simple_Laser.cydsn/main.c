@@ -47,6 +47,7 @@ uint8 buffer_read[USBUART_BUFFER_SIZE];
 uint8 serial_input = 0;
 bool toggle_finished = true;
 bool delayed_trigger = false;
+bool print_old_timestamp = false;
 
 // Exposure activate timestamps
 uint32_t seconds = 0;
@@ -54,6 +55,8 @@ uint32_t set_secs = 0;
 uint32_t set_ns = 0;
 uint32 t_e_ns = 0;
 uint32 t_e_s = 0;
+uint32 temp_e_ns = 0;
+uint32 temp_e_s = 0;
 uint32_t trigger_timestamps_msecs = 0;
 uint32_t mcu_secs = 0;
 uint32_t mcu_msecs = 0;
@@ -80,6 +83,7 @@ bool started = false;
 // Testing Functions
 void print_imu_via_usbuart(void);
 void print_exposure_timestamp(void);
+void print_exposure_timestamp_saved(uint32_t t_e_ns, uint32_t t_e_s);
 
 float sys_clock_cur_us_in_ms = 0;
 void sys_clock_us_callback(void); // 1ms callback interrupt function
@@ -100,8 +104,6 @@ int main(void)
 
     /* Sets up the GPIO interrupt and enables it */
     isr_EXPOSURE_ACT_StartEx(Isr_shutter_handler);
-    /* Clears the pin interrupt */
-    //Exposure_Active_ClearInterrupt();
     /* Clears the pending pin interrupt */
     isr_EXPOSURE_ACT_ClearPending();
     
@@ -193,7 +195,6 @@ int main(void)
         {
             frame_status = NO_FRAME;
             print_exposure_timestamp();
-
         }
 
         if (USBUART_GetCount() > 0) 
@@ -239,11 +240,17 @@ int main(void)
                 us_clock_Enable();
             }
             if (trigger_frame){
-                __disable_irq(); // Need to atomically check state of toggle + set delayed_trigger
-                // Still possible signal could be missed while irq disabled?
+                __disable_irq(); 
                 if (toggle_finished) {
                     toggle_finished = false;
                     laser_enable = temp_laser_enable;
+                    // Handle potential race condition of unhandled frame_status
+                    if (frame_status == NEW_FRAME) {
+                        temp_e_ns = t_e_ns;
+                        temp_e_s = t_e_s;
+                        frame_status = NO_FRAME;
+                        print_old_timestamp = true;
+                    }
                     __enable_irq();
                     toggle_laser_led();
                     trigger_timestamps_msecs = (mcu_msecs + TRIGGER_DELAY_TIMEOUT);
@@ -265,7 +272,11 @@ int main(void)
                 }
             }
 
-
+            if (print_old_timestamp)
+            {
+                print_exposure_timestamp_saved(temp_e_ns, temp_e_s);
+                print_old_timestamp = false;
+            }
             //PWM_LASER_WriteCompare(pwm_laser_val);
             led_test++;
         }
@@ -461,6 +472,17 @@ void print_exposure_timestamp(void)
     }
     
     sprintf((char *)buffer, "E:%lu\t%lu\r\n", t_e_ns, t_e_s);
+    
+    usb_put_string((char8 *)(buffer));
+}
+
+void print_exposure_timestamp_saved(uint32_t ns, uint32_t s)
+{
+    while (0u == USBUART_CDCIsReady())
+    {
+    }
+    
+    sprintf((char *)buffer, "E:%lu\t%lu\r\n", ns, s);
     
     usb_put_string((char8 *)(buffer));
 }
