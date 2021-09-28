@@ -432,7 +432,7 @@
       <Data key="4b305213-e87d-4e56-981b-4201d35a3999" value="BIO_26" />
       <Data key="4d0402f0-51a5-467d-8d01-6200f91efe47" value="UP_RX" />
       <Data key="4e253bc2-9924-4c6b-aac8-4e314655846e" value="P3V3_pass" />
-      <Data key="5a7d23a6-8086-439b-a58e-e733cfe2510d" value="Led_Pwr" />
+      <Data key="5a7d23a6-8086-439b-a58e-e733cfe2510d" value="Led_Key" />
       <Data key="5ac08dda-28b3-4425-ac80-076c5b86f567" value="Presence_8" />
       <Data key="5d39459d-c182-462f-837c-44340684f20d" value="R1_Presence" />
       <Data key="5ed53f2c-606a-4817-9c73-fb350e8aabce" value="BIO_22" />
@@ -471,7 +471,7 @@
       <Data key="67240fc9-7bb5-474c-813f-1140bdb59a75" value="Presence_2" />
       <Data key="77576ab1-52cb-46e0-9c83-374a84909854" value="R2_Presence" />
       <Data key="92923b91-99dc-45b9-90eb-41c944a0ee16" value="BIO_08" />
-      <Data key="1425177d-0d0e-4468-8bcc-e638e5509a9b" value="VESC_RX" />
+      <Data key="1425177d-0d0e-4468-8bcc-e638e5509a9b" value="Rx_1" />
       <Data key="01439654-a7df-47ec-9885-9b81fb6294a3" value="Presence_6" />
       <Data key="86307341-9052-447d-8356-ee2a97ebc76e" value="IMU_MISO" />
       <Data key="a9953891-0467-4968-90c9-762657bfe43d" value="BIO_12" />
@@ -482,8 +482,8 @@
       <Data key="bcb93176-6b34-4fea-88db-f62149f60538" value="BIO_30" />
       <Data key="bdc681dc-76a0-4a4e-9b94-4e6bb88eeb4d" value="Presence_1" />
       <Data key="bebf0efb-2d42-4b62-ada3-5af07fb7b401" value="BIO_17" />
-      <Data key="beca5e2d-f70f-4900-a4db-7eca1ed3126e/8b77a6c4-10a0-4390-971c-672353e2a49c" value="USBUART_1_Dm" />
-      <Data key="beca5e2d-f70f-4900-a4db-7eca1ed3126e/618a72fc-5ddd-4df5-958f-a3d55102db42" value="USBUART_1_Dp" />
+      <Data key="beca5e2d-f70f-4900-a4db-7eca1ed3126e/8b77a6c4-10a0-4390-971c-672353e2a49c" value="USBUART_Dm" />
+      <Data key="beca5e2d-f70f-4900-a4db-7eca1ed3126e/618a72fc-5ddd-4df5-958f-a3d55102db42" value="USBUART_Dp" />
       <Data key="c58f7443-5226-4c86-a08e-c7eaff2128d4" value="IMU_SCK" />
       <Data key="c62e3ab5-f5b2-491e-93f0-ba534d3a8fb2" value="BIO_05" />
       <Data key="c3559c8a-42e6-4549-a82f-49d882f495ae" value="Presence_5" />
@@ -498,7 +498,7 @@
       <Data key="e950f96d-1186-4d90-bcd9-3da3d059e90c" value="Presence_3" />
       <Data key="e78273cd-52a5-442c-839b-23268cdcfbb4" value="ENC_RX" />
       <Data key="e1775085-4044-4542-b172-437093a2bbaa" value="IMU_PS0" />
-      <Data key="ed092b9b-d398-4703-be89-cebf998501f6" value="VESC_TX" />
+      <Data key="ed092b9b-d398-4703-be89-cebf998501f6" value="Tx_1" />
       <Data key="f3c0ad6d-bcc3-4602-91f1-76178bbdfb5a" value="BIO_00" />
       <Data key="f9f3f8f6-4b3b-4a42-ba22-7c93ab85da15" value="BIO_01" />
       <Data key="f95505d0-3da7-4e99-a554-c163c852bcb4" value="Test" />
@@ -3800,7 +3800,7 @@
     </Group>
     <Group key="1425177d-0d0e-4468-8bcc-e638e5509a9b">
       <Group key="0">
-        <Data key="Port Format" value="0,1" />
+        <Data key="Port Format" value="3,3" />
       </Group>
     </Group>
     <Group key="01439654-a7df-47ec-9885-9b81fb6294a3">
@@ -3925,7 +3925,7 @@
     </Group>
     <Group key="ed092b9b-d398-4703-be89-cebf998501f6">
       <Group key="0">
-        <Data key="Port Format" value="0,2" />
+        <Data key="Port Format" value="3,1" />
       </Group>
     </Group>
     <Group key="f3c0ad6d-bcc3-4602-91f1-76178bbdfb5a">
