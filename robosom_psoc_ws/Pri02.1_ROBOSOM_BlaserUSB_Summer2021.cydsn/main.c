@@ -78,7 +78,8 @@ uint8_t frame_status = NO_FRAME;
 uint8_t laser_enable = LSR_DISABLE;
 uint8_t pulse_enabled = 1;
 uint8_t trigger_frame = 1;
-uint8_t pwm_led_val = MAX_LED_VAL/2;
+//uint8_t pwm_led_val = MAX_LED_VAL/2;
+uint8_t pwm_led_val = MAX_LED_VAL;
 bool started = false;
 // Testing Functions
 void print_imu_via_usbuart(void);
@@ -140,11 +141,11 @@ int main(void)
     CyGlobalIntEnable; /* Enable global interrupts. */
     
 
-    /* For initial testing, establish USB communication before attempting to send first trigger frame */
-    while (0u == USBUART_CDCIsReady())
-    {
-        usb_configuration_reinit();
-    }
+//    /* For initial testing, establish USB communication before attempting to send first trigger frame */
+//    while (0u == USBUART_CDCIsReady())
+//    {
+//        usb_configuration_reinit();
+//    }
     // LL comment this out so that we can try to SWD debug without USB
     
     // Trigger first Ximea trigger pulse - Might want to link this to a button for manual triggering.
@@ -168,7 +169,7 @@ int main(void)
         CyDelay(10);
 
     }
-    /*
+    ///*
     else {
         struct ICHT_Status_Regs_R regs; 
         regs = config.regs.STATUS;
@@ -177,8 +178,29 @@ int main(void)
         usb_put_string((char8 *)buffer);      
         CyDelay(10);
     }
-    */
+    //*/
     
+    // Start up system check - Turn on LED then Laser for 1sec, then OFF
+    //Laser_En_1_Write(1);
+    LED_DRIVER_WriteCompare(MAX_LED_VAL);
+    CyDelay(1000);
+    LED_DRIVER_WriteCompare(PWM_LASER_OFF);
+    Laser_En_1_Write(1);
+    CyDelay(1000);
+    Laser_En_1_Write(0);
+    LED_DRIVER_WriteCompare(MAX_LED_VAL);
+    CyDelay(1000);
+    Laser_En_1_Write(1);
+    LED_DRIVER_WriteCompare(PWM_LASER_OFF);
+    
+    /* For initial testing, establish USB communication before attempting to send first trigger frame */
+    while (0u == USBUART_CDCIsReady())
+    {
+        usb_configuration_reinit();
+    }
+    
+    
+    // Main loop
     for(;;)
     {
         
@@ -186,7 +208,7 @@ int main(void)
         reconfigured = usb_configuration_reinit();
         
         imu_bmi160_read_acc_gyo();
-        imu_bmi160_read_steps();
+        imu_bmi160_read_steps(); 
 
         //USBUART_user_echo();
         print_imu_via_usbuart();
