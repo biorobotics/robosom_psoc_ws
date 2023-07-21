@@ -3,7 +3,7 @@
 <!--This file is machine generated and read. It is not intended to be edited by hand.-->
 <!--Due to this, there is no schema for this file.-->
 <CyGuid_2867d519-54d2-4c01-9830-c51cb08bc3dd type_name="CyDesigner.Common.ProjMgmt.Model.CyPrjMgmtWorkspaceSerialize" version="5" xml_contents_version="3" name="robosom_psoc_ws" persistent="robosom_psoc_ws.cywrk" platform="NOT_USED">
-<current_project name=".\Pri03_ROBOSOM_ADC_To_USB_and_UART.cydsn\Pri03_ROBOSOM_ADC_To_USB_and_UART.cyprj" />
+<current_project name="D:\Downloads\robosom_psoc_ws-master\robosom_psoc_ws-master\robosom_psoc_ws\Pri03_ROBOSOM_ADC_Diff_To_USB_and_UART.cydsn\Pri03_ROBOSOM_ADC_Diff_To_USB_and_UART.cyprj" />
 <wrkspc_folders />
 <files />
 <projects>
@@ -22,6 +22,7 @@
 <v>.\Pri07_ROBOSOM_IMU_with_Simple_Laser_HWSync.cydsn\Pri07_ROBOSOM_IMU_with_Simple_Laser_HWSync.cyprj</v>
 <v>.\Pri02_ROBOSOM_IMU_Test.cydsn\Pri02_ROBOSOM_IMU_Test.cyprj</v>
 <v>.\Pri03_ROBOSOM_ADC_To_USB_and_UART.cydsn\Pri03_ROBOSOM_ADC_To_USB_and_UART.cyprj</v>
+<v>D:\Downloads\robosom_psoc_ws-master\robosom_psoc_ws-master\robosom_psoc_ws\Pri03_ROBOSOM_ADC_Diff_To_USB_and_UART.cydsn\Pri03_ROBOSOM_ADC_Diff_To_USB_and_UART.cyprj</v>
 </projects>
 <workspace_id v="43adb24a-68a4-4637-884f-83778c930dfb" />
 <WriteAppVersionLastSavedWith v="4.4.0.80" />
