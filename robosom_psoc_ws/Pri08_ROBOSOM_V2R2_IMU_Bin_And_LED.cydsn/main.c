@@ -56,8 +56,8 @@ int main(void)
     
     // PWM Block Init
     PWM_LED_Start();
-    PWM_BUZZER_Start();
-    PWM_BUZZER_EN_Start();
+    //PWM_BUZZER_Start();
+    //PWM_BUZZER_EN_Start();
     
     // USBUART Init
     USBUART_Start(USBFS_DEVICE, USBUART_5V_OPERATION);
@@ -126,8 +126,8 @@ int main(void)
             usbuart_incoming_char = usbuart_incoming_char - 0x30;
             
             Led_Red_Write(usbuart_incoming_char & 0x01);
-            Led_Green_Write(usbuart_incoming_char>>1 & 0x01);
-            Led_Blue_Write(usbuart_incoming_char>>2 & 0x01);
+            Led_Green_Write((usbuart_incoming_char>>1) & 0x01);
+            Led_Blue_Write((usbuart_incoming_char>>2) & 0x01);
         }
           
         //CyDelay(100);       
@@ -164,8 +164,8 @@ int8_t imu_bmi160_config(void)
 
     /* Select the Output data rate, range of accelerometer sensor */
     // sensor.accel_cfg.odr = BMI160_ACCEL_ODR_1600HZ;
-    sensor.accel_cfg.odr = BMI160_ACCEL_ODR_800HZ;
-    sensor.accel_cfg.range = BMI160_ACCEL_RANGE_4G;
+    sensor.accel_cfg.odr = BMI160_ACCEL_ODR_1600HZ;
+    sensor.accel_cfg.range = BMI160_ACCEL_RANGE_2G;
     sensor.accel_cfg.bw = BMI160_ACCEL_BW_NORMAL_AVG4;
     // sensor.accel_cfg.bw = BMI160_ACCEL_BW_RES_AVG8;
     #define IMU_ACC_SCALE 4
@@ -174,9 +174,9 @@ int8_t imu_bmi160_config(void)
     sensor.accel_cfg.power = BMI160_ACCEL_NORMAL_MODE;
 
     /* Select the Output data rate, range of Gyroscope sensor */
-    sensor.gyro_cfg.odr = BMI160_GYRO_ODR_3200HZ;
+    sensor.gyro_cfg.odr = BMI160_GYRO_ODR_1600HZ;
     //sensor.gyro_cfg.range = BMI160_GYRO_RANGE_1000_DPS;
-    sensor.gyro_cfg.range = BMI160_GYRO_RANGE_500_DPS;
+    sensor.gyro_cfg.range = BMI160_GYRO_RANGE_125_DPS;
     sensor.gyro_cfg.bw = BMI160_GYRO_BW_NORMAL_MODE;
     // sensor.gyro_cfg.bw = BMI160_GYRO_BW_OSR2_MODE;
     #define IMU_GYO_SCALE 500
@@ -291,17 +291,24 @@ void USBUART_user_echo(void) {
 
 void print_imu_via_usbuart_str(void)
 {
-    int32_t check_sum = 0;
-    float delta_t__us_float = (float)imu_delta_t /48;
+    //int32_t check_sum = 0;
+    float delta_t__us_float = (float)imu_delta_t/24;
     
-    sys_clock_cur_us_in_ms = (float)CySysTickGetValue() * (1/(float)cydelay_freq_hz);
+    //sys_clock_cur_us_in_ms = (float)CySysTickGetValue() * (1/(float)cydelay_freq_hz);
 
     while (0u == USBUART_CDCIsReady())
     {
     }
 
+    // sensor raw mode
     sprintf((char *)buffer, "%d\t%d\t%d\t%d\t%d\t%d\t%.4f\r\n", accel.x, accel.y, accel.z, gyro.x, gyro.y, gyro.z, delta_t__us_float);
-
+    
+    // G and DPS mode with delta_t
+    //sprintf((char *)buffer, "%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\r\n", (float)accel.x/32767*2, (float)accel.y/32767*2, (float)accel.z/32767*2, (float)gyro.x/32767*125, (float)gyro.y/32767*125, (float)gyro.z/32767*125, delta_t__us_float);
+    
+    // Debug mode
+    // sprintf((char *)buffer, "%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t150\r\n", (float)accel.x/32767*200, (float)accel.y/32767*200, (float)accel.z/32767*200, (float)gyro.x/32767*125, (float)gyro.y/32767*125, (float)gyro.z/32767*125);
+    
     //count = sizeof(buffer);                                     
     /* Send data back to host. */                                                                                                                                                                                                                                                                                                                    
     //USBUART_PutData(buffer, count);

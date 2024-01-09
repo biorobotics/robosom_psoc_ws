@@ -13,7 +13,7 @@
 <v>Output</v>
 </TreeKeys>
 <TreeStates>
-<CyGuid_2a325b3b-c96a-4e9f-b7a0-2c44ecb5f237 type_name="CyDesigner.Common.Base.Controls.CyTreeViewState" version="1" SelectedNodeId="robosom_psoc_ws\Pri08_ROBOSOM_V2R2_IMU_Bin_And_LED\TopDesign">
+<CyGuid_2a325b3b-c96a-4e9f-b7a0-2c44ecb5f237 type_name="CyDesigner.Common.Base.Controls.CyTreeViewState" version="1" SelectedNodeId="robosom_psoc_ws\Pri08_ROBOSOM_V2R2_IMU_Bin_And_LED\Source Files\main.c">
 <ExpandedNodeIds>
 <v>robosom_psoc_ws</v>
 <v>robosom_psoc_ws\Pri00_ROBOSOM_Bootloader\TopDesign</v>
@@ -1302,6 +1302,7 @@
 <v>robosom_psoc_ws\Pri08_ROBOSOM_V2R2_IMU_Bin_And_LED\CortexM3\ARM_GCC_541\Debug\Listing Files\SDA_1.lst</v>
 <v>robosom_psoc_ws\Pri08_ROBOSOM_V2R2_IMU_Bin_And_LED\CortexM3\ARM_GCC_541\Debug\Listing Files\Timer_1.lst</v>
 <v>robosom_psoc_ws\Pri08_ROBOSOM_V2R2_IMU_Bin_And_LED\CortexM3\ARM_GCC_541\Debug\Listing Files\Timer_1_PM.lst</v>
+<v>robosom_psoc_ws\Pri08_ROBOSOM_V2R2_IMU_Bin_And_LED\CortexM3\ARM_GCC_541\Debug\Listing Files\timer_clock.lst</v>
 <v>robosom_psoc_ws\Pri08_ROBOSOM_V2R2_IMU_Bin_And_LED\CortexM3\ARM_GCC_541\Debug\Listing Files\USBUART.lst</v>
 <v>robosom_psoc_ws\Pri08_ROBOSOM_V2R2_IMU_Bin_And_LED\CortexM3\ARM_GCC_541\Debug\Listing Files\USBUART_audio.lst</v>
 <v>robosom_psoc_ws\Pri08_ROBOSOM_V2R2_IMU_Bin_And_LED\CortexM3\ARM_GCC_541\Debug\Listing Files\USBUART_boot.lst</v>
@@ -1849,6 +1850,7 @@
 <OpenDocs>
 <name v=".\Pri08_ROBOSOM_V2R2_IMU_Bin_And_LED.cydsn\main.c" />
 <name v=".\Pri08_ROBOSOM_V2R2_IMU_Bin_And_LED.cydsn\TopDesign\TopDesign.cysch" />
+<name v=".\Library\BMI160\bmi160_defs.h" />
 </OpenDocs>
 <OpenDocsLayout><![CDATA[<?xml version="1.0"?><!--
 
@@ -1856,7 +1858,7 @@
   Copyright (c) 2001-2016 Actipro Software LLC.  All rights reserved.
   http://www.actiprosoftware.com
 
---><DocumentLayout Version="1.0"><LayoutData><TabbedMdiRootContainer Orientation="Horizontal"><TabbedMdiContainer Size="1828, 919" SelectedTabbedMdiWindow="a1052983-548b-4fbc-a123-35ce5a413688"><DocumentWindow Key="D:\LLGD\3LLWork\0PrjSyn\PSOC\robosom_psoc_ws_lab\robosom_psoc_ws\Pri08_ROBOSOM_V2R2_IMU_Bin_And_LED.cydsn\main.c" Guid="a1052983-548b-4fbc-a123-35ce5a413688" /><DocumentWindow Key="D:\LLGD\3LLWork\0PrjSyn\PSOC\robosom_psoc_ws_lab\robosom_psoc_ws\Pri08_ROBOSOM_V2R2_IMU_Bin_And_LED.cydsn\TopDesign\TopDesign.cysch" Guid="91ec5592-dadb-46fe-be62-b43dd7a4922e" /><ToolWindow Key="Start Page:bd4649ab-da6b-4d04-a663-c722b8bf99db:Start Page" Guid="5a7931bf-81b8-4a16-84ad-27956f6767ee" /></TabbedMdiContainer></TabbedMdiRootContainer><FloatingContainers /></LayoutData></DocumentLayout>]]></OpenDocsLayout>
+--><DocumentLayout Version="1.0"><LayoutData><TabbedMdiRootContainer Orientation="Horizontal"><TabbedMdiContainer Size="1828, 919" SelectedTabbedMdiWindow="a1052983-548b-4fbc-a123-35ce5a413688"><DocumentWindow Key="D:\LLGD\3LLWork\0PrjSyn\PSOC\robosom_psoc_ws_lab\robosom_psoc_ws\Pri08_ROBOSOM_V2R2_IMU_Bin_And_LED.cydsn\main.c" Guid="a1052983-548b-4fbc-a123-35ce5a413688" /><DocumentWindow Key="D:\LLGD\3LLWork\0PrjSyn\PSOC\robosom_psoc_ws_lab\robosom_psoc_ws\Pri08_ROBOSOM_V2R2_IMU_Bin_And_LED.cydsn\TopDesign\TopDesign.cysch" Guid="91ec5592-dadb-46fe-be62-b43dd7a4922e" /><ToolWindow Key="Start Page:bd4649ab-da6b-4d04-a663-c722b8bf99db:Start Page" Guid="5a7931bf-81b8-4a16-84ad-27956f6767ee" /><DocumentWindow Key="D:\LLGD\3LLWork\0PrjSyn\PSOC\robosom_psoc_ws_lab\robosom_psoc_ws\Library\BMI160\bmi160_defs.h" Guid="6254f45f-a36d-4d1b-ad81-ea0329d6e701" /></TabbedMdiContainer></TabbedMdiRootContainer><FloatingContainers /></LayoutData></DocumentLayout>]]></OpenDocsLayout>
 <config v="" />
 <AutoUpdate v="true" />
 </CyGuid_843a90a4-0c4b-4e44-991d-05e7fb117a21>
