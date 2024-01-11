@@ -36,6 +36,9 @@ uint8 buffer[USBUART_BUFFER_SIZE];
 void USBUART_user_check_init(void);
 void USBUART_user_echo(void);
 
+// message sequence number
+uint16_t message_seq = 0;
+
 // Testing Function
 void print_imu_via_usbuart_bin(void);
 void print_imu_via_usbuart_str(void);
@@ -50,7 +53,7 @@ uint16 imu_delta_t;
 int main(void)
 {
     uint8_t led_test = 0;
-    uint8 usbuart_incoming_char = 0;
+    uint8_t usbuart_incoming_char = 0;
     
     CyGlobalIntEnable; /* Enable global interrupts. */
     
@@ -129,6 +132,8 @@ int main(void)
             Led_Green_Write((usbuart_incoming_char>>1) & 0x01);
             Led_Blue_Write((usbuart_incoming_char>>2) & 0x01);
         }
+        
+        message_seq++;
           
         //CyDelay(100);       
     }
@@ -301,7 +306,7 @@ void print_imu_via_usbuart_str(void)
     }
 
     // sensor raw mode
-    sprintf((char *)buffer, "%d\t%d\t%d\t%d\t%d\t%d\t%.4f\r\n", accel.x, accel.y, accel.z, gyro.x, gyro.y, gyro.z, delta_t__us_float);
+    sprintf((char *)buffer, "%u\t%d\t%d\t%d\t%d\t%d\t%d\t%.4f\r\n", message_seq, accel.x, accel.y, accel.z, gyro.x, gyro.y, gyro.z, delta_t__us_float);
     
     // G and DPS mode with delta_t
     //sprintf((char *)buffer, "%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\r\n", (float)accel.x/32767*2, (float)accel.y/32767*2, (float)accel.z/32767*2, (float)gyro.x/32767*125, (float)gyro.y/32767*125, (float)gyro.z/32767*125, delta_t__us_float);
