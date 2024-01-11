@@ -297,16 +297,23 @@ void USBUART_user_echo(void) {
 void print_imu_via_usbuart_str(void)
 {
     //int32_t check_sum = 0;
-    float delta_t__us_float = (float)imu_delta_t/24;
+    float delta_t_us_float = (float)imu_delta_t/24;
+
+    int16_t delta_t_us_a = 0;
+    int16_t delta_t_us_b = 0;
+    
+    delta_t_us_a = (int16_t)delta_t_us_float;
+    delta_t_us_b = (int16_t)((delta_t_us_float - (float)delta_t_us_a )*1000);
     
     //sys_clock_cur_us_in_ms = (float)CySysTickGetValue() * (1/(float)cydelay_freq_hz);
 
-    while (0u == USBUART_CDCIsReady())
+    while(0u == USBUART_CDCIsReady())
     {
     }
 
     // sensor raw mode
-    sprintf((char *)buffer, "%u\t%d\t%d\t%d\t%d\t%d\t%d\t%.4f\r\n", message_seq, accel.x, accel.y, accel.z, gyro.x, gyro.y, gyro.z, delta_t__us_float);
+    //sprintf((char *)buffer, "%u\t%d\t%d\t%d\t%d\t%d\t%d\t%.4f\r\n", message_seq, accel.x, accel.y, accel.z, gyro.x, gyro.y, gyro.z, delta_t_us_float);
+    sprintf((char *)buffer, "%u\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\r\n", message_seq, accel.x, accel.y, accel.z, gyro.x, gyro.y, gyro.z, delta_t_us_a, delta_t_us_b);
     
     // G and DPS mode with delta_t
     //sprintf((char *)buffer, "%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\r\n", (float)accel.x/32767*2, (float)accel.y/32767*2, (float)accel.z/32767*2, (float)gyro.x/32767*125, (float)gyro.y/32767*125, (float)gyro.z/32767*125, delta_t__us_float);
