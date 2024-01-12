@@ -464,6 +464,7 @@
       <Data key="3455bf03-60bc-4bfb-9001-ee639861a6ef" value="BIO_24" />
       <Data key="4458e15a-cc19-4d2a-91c5-bf3d6733d257" value="BIO_14" />
       <Data key="6373ec7a-fc1e-4d89-b66e-1b1bd685a705" value="BIO_25" />
+      <Data key="07058ba9-1b55-444e-8994-0e1b58a71df5" value="Pulse" />
       <Data key="8276c6af-3dca-44e8-9fd5-c0a7fdc27d6c" value="BIO_11" />
       <Data key="22863ebe-a37b-476f-b252-6e49a8c00b12" value="SDA_1" />
       <Data key="32521d97-5bc1-4c68-9680-08bf2f1995e8" value="DOWN_RX" />
@@ -3769,6 +3770,11 @@
         <Data key="Port Format" value="3,7" />
       </Group>
     </Group>
+    <Group key="07058ba9-1b55-444e-8994-0e1b58a71df5">
+      <Group key="0">
+        <Data key="Port Format" value="3,4" />
+      </Group>
+    </Group>
     <Group key="8276c6af-3dca-44e8-9fd5-c0a7fdc27d6c">
       <Group key="0">
         <Data key="Port Format" value="12,2" />
@@ -3983,7 +3989,7 @@
     <Data key="CYDEV_CONFIG_UNUSED_IO" value="AllowButWarn" />
     <Data key="CYDEV_CONFIGURATION_ECC" value="True" />
     <Data key="CYDEV_CONFIGURATION_MODE" value="COMPRESSED" />
-    <Data key="CYDEV_DEBUGGING_DPS" value="SWD" />
+    <Data key="CYDEV_DEBUGGING_DPS" value="Disable" />
     <Data key="CYDEV_DEBUGGING_XRES" value="False" />
     <Data key="CYDEV_ECC_ENABLE" value="False" />
     <Data key="CYDEV_HEAP_SIZE" value="0x200" />

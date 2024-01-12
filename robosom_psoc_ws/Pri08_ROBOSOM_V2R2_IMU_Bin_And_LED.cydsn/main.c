@@ -48,7 +48,7 @@ uint32 sys_clock_cur_ms = 0;
 float sys_clock_cur_us_in_ms = 0;
 void sys_clock_ms_callback(void); // 1ms callback interrupt function
 
-uint16 imu_delta_t;
+uint32_t imu_delta_t=0;
 
 int main(void)
 {
@@ -86,10 +86,10 @@ int main(void)
     Led_Red_Write(0);
     Led_Green_Write(0);
     Led_Blue_Write(0);
-    PLED_Write(1);
+    PLED_Write(0);
     
     CyDelay(100);
-    PLED_Write(0);
+    PLED_Write(1);
     
     // Start system 1ms tick
     CySysTickStart();
@@ -100,16 +100,15 @@ int main(void)
     {
         // get time stamp
         Timer_1_Stop();
-        imu_delta_t = 0xffff - Timer_1_ReadCounter();
+        imu_delta_t = 0xffffffff - Timer_1_ReadCounter();
+
+        Timer_1_WriteCounter(0xffffffff);
         Timer_1_Start();
         
         // take IMU measurement
         imu_bmi160_read_acc_gyo();
         
         // reset timer
-        Timer_1_Stop();
-        Timer_1_WriteCounter(0xffff);
-        Timer_1_Start();
         
         // process IMU data
         imu_bmi160_read_steps();
@@ -134,6 +133,7 @@ int main(void)
         }
         
         message_seq++;
+        Pulse_Write(message_seq & 0x01);
           
         //CyDelay(100);       
     }
@@ -299,11 +299,11 @@ void print_imu_via_usbuart_str(void)
     //int32_t check_sum = 0;
     float delta_t_us_float = (float)imu_delta_t/24;
 
-    int16_t delta_t_us_a = 0;
-    int16_t delta_t_us_b = 0;
+    int32_t delta_t_us_a = 0;
+    int32_t delta_t_us_b = 0;
     
-    delta_t_us_a = (int16_t)delta_t_us_float;
-    delta_t_us_b = (int16_t)((delta_t_us_float - (float)delta_t_us_a )*1000);
+    delta_t_us_a = (int32_t)delta_t_us_float;
+    delta_t_us_b = (int32_t)((delta_t_us_float - (float)delta_t_us_a )*1000);
     
     //sys_clock_cur_us_in_ms = (float)CySysTickGetValue() * (1/(float)cydelay_freq_hz);
 
